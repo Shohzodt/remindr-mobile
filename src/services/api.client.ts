@@ -10,6 +10,9 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
-    // TODO: Add auth token integration here
+    const token = await import('./storage').then(m => m.TokenStorage.getAccessToken());
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
 });

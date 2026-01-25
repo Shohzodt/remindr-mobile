@@ -28,6 +28,12 @@ export const Typography = {
         medium: "500",
         bold: "700",
     } as const,
+    family: {
+        regular: "PlusJakartaSans_400Regular",
+        medium: "PlusJakartaSans_500Medium",
+        bold: "PlusJakartaSans_700Bold",
+        extraBold: "PlusJakartaSans_800ExtraBold",
+    },
 };
 
 export const Theme = {
