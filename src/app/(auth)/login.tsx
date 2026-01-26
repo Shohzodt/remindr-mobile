@@ -50,9 +50,9 @@ export default function LoginScreen() {
 
 
   return (
-    <View style={styles.container}>
+      <View className="flex-1 bg-bg-primary overflow-hidden min-h-screen">
       {/* Background Glow */}
-      <View style={styles.glowContainer}>
+      <View className="absolute -top-[20%] -left-[40%] w-[500px] h-[500px] pointer-events-none">
          <Svg height="100%" width="100%">
           <Defs>
             <RadialGradient
@@ -64,8 +64,8 @@ export default function LoginScreen() {
               fx="50%"
               fy="50%"
             >
-              <Stop offset="0" stopColor="#9333ea" stopOpacity="0.2" />
-              <Stop offset="1" stopColor="#9333ea" stopOpacity="0" />
+              <Stop offset="0" stopColor="#8B5CF6" stopOpacity="0.2" />
+              <Stop offset="1" stopColor="#8B5CF6" stopOpacity="0" />
             </RadialGradient>
           </Defs>
           <Circle cx="50%" cy="50%" r="50%" fill="url(#grad)" />
@@ -73,7 +73,7 @@ export default function LoginScreen() {
       </View>
 
       {/* Background Glow Bottom Right */}
-      <View style={styles.glowContainerBottomRight}>
+      <View className="absolute -bottom-[10%] -right-[10%] w-72 h-72 pointer-events-none">
          <Svg height="100%" width="100%">
           <Defs>
             <RadialGradient
@@ -85,56 +85,58 @@ export default function LoginScreen() {
               fx="50%"
               fy="50%"
             >
-              <Stop offset="0" stopColor="#9333ea" stopOpacity="0.2" />
-              <Stop offset="1" stopColor="#9333ea" stopOpacity="0" />
+              <Stop offset="0" stopColor="#d946ef" stopOpacity="0.2" />
+              <Stop offset="1" stopColor="#d946ef" stopOpacity="0" />
             </RadialGradient>
           </Defs>
           <Circle cx="50%" cy="50%" r="50%" fill="url(#grad-br)" />
         </Svg>
       </View>
 
-      <SafeAreaView style={styles.contentContainer}>
-      <View style={styles.content}>
+      <SafeAreaView className="flex-1">
+      <View className="flex-1 px-8 pt-20 pb-12 justify-between">
         {/* Logo Section */}
-        <View style={styles.header}>
+        <View className="flex-1 items-center justify-center mb-12">
           <RemindrLogo size={160} style={{ marginBottom: 24 }} />
-          <Text style={styles.appName}>Remind
-            <Text style={styles.appName2}>r</Text>
+          <Text className="text-5xl font-extrabold text-text-primary tracking-tighter mb-3 mt-6">
+            Remind
+            <Text className="text-accent-fuchsia">r</Text>
           </Text>
-          <Text style={styles.tagline}>Manage what matters.</Text>
-          <Text style={styles.description}>
+          <Text className="text-lg text-text-secondary mb-2 font-medium">Manage what matters.</Text>
+          <Text className="text-xs text-text-secondary text-center leading-5">
             Smart reminders for deadlines, contracts, and{'\n'}important life events.
           </Text>
         </View>
 
         {/* Buttons Section */}
-        <View style={styles.buttonsContainer}>
+        <View className="w-full gap-4">
           <TouchableOpacity 
-            style={[styles.button, styles.googleButton]} 
+            className="flex-row items-center justify-center h-16 rounded-3xl w-full bg-white active:opacity-80" 
             onPress={handleGoogleLogin}
             disabled={!request}
             activeOpacity={0.8}
           >
-            <AntDesign name="google" size={24} color="black" style={styles.icon} />
-            <Text style={[styles.buttonText, styles.googleButtonText]}>Continue with Google</Text>
+            <AntDesign name="google" size={24} color="black" style={{ marginRight: 12 }} />
+            <Text className="text-base font-semibold text-black">Continue with Google</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[styles.button, styles.telegramButton]} 
+            className="flex-row items-center justify-center h-16 rounded-3xl w-full bg-[#2AABEE] active:opacity-80" 
             onPress={handleTelegramLogin}
             activeOpacity={0.8}
           >
-            <FontAwesome name="telegram" size={24} color="white" style={styles.icon} />
-            <Text style={[styles.buttonText, styles.telegramButtonText]}>Continue with Telegram</Text>
+            <FontAwesome name="telegram" size={24} color="white" style={{ marginRight: 12 }} />
+            <Text className="text-base font-semibold text-white">Continue with Telegram</Text>
           </TouchableOpacity>
         </View>
 
         {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>BY SIGNING IN, YOU AGREE TO OUR</Text>
-          <Text style={styles.footerLink2}>TERMS OF SERVICE 
-            <Text style={styles.footerLink}>&</Text>
-            <Text style={styles.footerLink2}>PRIVACY POLICY</Text>
+        <View className="items-center mt-12">
+          <Text className="text-[#444] text-[11px] font-bold tracking-[1px] mb-1">BY SIGNING IN, YOU AGREE TO OUR</Text>
+          <Text className="text-text-secondary text-[11px] font-bold tracking-[1.5px]">
+            TERMS OF SERVICE 
+            <Text className="text-[#52525c] text-[10px] font-extrabold tracking-[1px]"> & </Text>
+            <Text className="text-text-secondary">PRIVACY POLICY</Text>
           </Text>
         </View>
       </View>
@@ -142,128 +144,3 @@ export default function LoginScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    minHeight: '100%',
-    backgroundColor: '#050505',
-    overflow: 'hidden',
-  },
-  glowContainer: {
-    pointerEvents: 'none',
-    position: 'absolute',
-    top: '-20%',
-    left: '-40%',
-    width: 500, // w-72
-    height: 500,
-  },
-  glowContainerBottomRight: {
-    pointerEvents: 'none',
-    position: 'absolute',
-    bottom: '-10%',
-    right: '-10%',
-    width: 288, // w-72
-    height: 288,
-  },
-  contentContainer: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 80,
-    paddingBottom: 48,
-    justifyContent: 'space-between',
-  },
-  header: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 48,
-  },
-  appName: {
-    fontSize: 48,
-    fontWeight: 900,
-    fontFamily: Theme.typography.family.bold,
-    color: '#fff',
-    letterSpacing: -2.2,
-    marginBottom: 12,
-    marginTop: 24,
-  },
-  appName2: {
-    color: 'rgb(225, 42, 251)'
-  },
-  tagline: {
-    fontSize: 18,
-    color: '#9f9fa9',
-    marginBottom: 8,
-    fontWeight: '500',
-    fontFamily: Theme.typography.family.medium,
-  },
-  description: {
-    fontSize: 12,
-    color: '#9f9fa9',
-    textAlign: 'center',
-    lineHeight: 20,
-    fontFamily: Theme.typography.family.regular,
-  },
-  buttonsContainer: {
-    width: '100%',
-    gap: 16,
-  },
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 64,
-    borderRadius: 24,
-    width: '100%',
-  },
-  icon: {
-    marginRight: 12,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: Theme.typography.family.medium,
-  },
-  googleButton: {
-    backgroundColor: '#FFFFFF',
-  },
-  googleButtonText: {
-    color: '#000000',
-  },
-  telegramButton: {
-    backgroundColor: '#2AABEE', // Telegram Blue
-  },
-  telegramButtonText: {
-    color: '#FFFFFF',
-  },
-  footer: {
-    alignItems: 'center',
-    marginTop: 48,
-  },
-  footerText: {
-    color: '#444',
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1,
-    marginBottom: 4,
-    fontFamily: Theme.typography.family.bold,
-  },
-  footerLink: {
-    color: '#52525c',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
-    fontFamily: Theme.typography.family.extraBold,
-  },
-  footerLink2: {
-    color: '#9f9fa9',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-    fontFamily: Theme.typography.family.extraBold,
-  },
-});

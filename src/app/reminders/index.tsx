@@ -1,5 +1,4 @@
-import { View, Text, StyleSheet, Image } from "react-native";
-import { Theme } from "@/theme";
+import { View, Text, Image } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -7,43 +6,20 @@ export default function RemindersScreen() {
   const { user } = useAuth();
   
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.text}>Reminders List</Text>
+    <SafeAreaView className="flex-1 bg-bg-primary px-4 pt-4">
+      <Text className="text-text-primary text-2xl mb-6 font-bold">Reminders List</Text>
       {user && (
-        <View style={styles.userInfo}>
+        <View className="items-center mt-8">
            {user.avatarUrl && (
-             <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+             <Image 
+               source={{ uri: user.avatarUrl }} 
+               className="w-16 h-16 rounded-full mb-2" 
+               resizeMode="cover"
+             />
            )}
-           <Text style={styles.welcome}>Welcome, {user.displayName || 'User'}!</Text>
+           <Text className="text-text-secondary text-lg">Welcome, {user.displayName || 'User'}!</Text>
         </View>
       )}
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Theme.colors.background,
-    padding: Theme.spacing.md,
-  },
-  text: {
-    color: Theme.colors.text,
-    fontSize: Theme.typography.sizes.xl,
-    marginBottom: Theme.spacing.lg,
-  },
-  userInfo: {
-    alignItems: 'center',
-    marginTop: Theme.spacing.xl,
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    marginBottom: Theme.spacing.sm,
-  },
-  welcome: {
-    color: Theme.colors.muted,
-    fontSize: Theme.typography.sizes.lg,
-  },
-});

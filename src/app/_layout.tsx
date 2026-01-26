@@ -1,4 +1,6 @@
 import { Stack, useRouter, useSegments } from "expo-router";
+import "../global.css";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
 import { View, StyleSheet } from "react-native";
