@@ -1,28 +1,31 @@
 import * as Linking from 'expo-linking';
 
 /**
- * Parses the deep link URL to extract the token.
- * Expected format: remindr://auth/telegram?token=<JWT>
+ * Helper to safely extract the first string value from a query param
+ * which could be a string, an array of strings, or undefined.
+ */
+const getFirstParam = (param: string | string[] | undefined): string | null => {
+    if (!param) return null;
+    return Array.isArray(param) ? param[0] : param;
+};
+
+/**
+ * Parses the deep link URL to extract the authentication token/code.
+ * Supports:
+ * 1. remindr://login?token=<JWT> (New flow)
  */
 export const parseTelegramAuthCode = (url: string): string | null => {
     try {
         const parsed = Linking.parse(url);
 
-        // Check for 'login' path (as per user update) and 'token' param
-        if (parsed.path === 'login' && parsed.queryParams?.token) {
-            const token = parsed.queryParams.token;
-            return typeof token === 'string' ? token : null;
-        }
-
-        // Fallback/Legacy: Check for 'auth/telegram' and 'code'
-        if (parsed.path === 'auth/telegram' && parsed.queryParams?.code) {
-            const code = parsed.queryParams.code;
-            return typeof code === 'string' ? code : null;
+        // Strategy 1: Check for 'login' path with 'token' (Preferred)
+        if (parsed.path === 'login') {
+            return getFirstParam(parsed.queryParams?.token);
         }
 
         return null;
     } catch (error) {
-        console.error('Error parsing deep link:', error);
+        console.warn('Failed to parse deep link:', error);
         return null;
     }
 };
@@ -30,7 +33,9 @@ export const parseTelegramAuthCode = (url: string): string | null => {
 /**
  * Constructs the Telegram Bot deep link.
  * Format: tg://resolve?domain=<BOT_USERNAME>&start=AUTH_<NONCE>
+ * Automatically strips '@' from username if present.
  */
 export const getTelegramBotDeepLink = (botUsername: string, nonce: string): string => {
-    return `tg://resolve?domain=${botUsername}&start=AUTH_${nonce}`;
+    const cleanUsername = botUsername.replace(/^@/, '');
+    return `tg://resolve?domain=${cleanUsername}&start=AUTH_${nonce}`;
 };
