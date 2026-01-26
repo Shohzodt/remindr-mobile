@@ -14,7 +14,10 @@
       "backgroundColor": "#050505"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": ["tg"]
+      }
     },
     "android": {
       "adaptiveIcon": {

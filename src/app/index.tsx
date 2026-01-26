@@ -1,36 +1,42 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Link } from "expo-router";
 import { Theme } from "@/theme";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Remindr</Text>
-      <Text style={styles.subtitle}>Stay organized, effortlessly.</Text>
-      
-      <View style={styles.buttonContainer}>
-        <Link href="/reminders" asChild>
-          <Pressable style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}>
-            <Text style={styles.primaryButtonText}>My Reminders</Text>
-          </Pressable>
-        </Link>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Remindr</Text>
+        <Text style={styles.subtitle}>Stay organized, effortlessly.</Text>
         
-        <Link href="/settings" asChild>
-          <Pressable style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}>
-            <Text style={styles.secondaryButtonText}>Settings</Text>
-          </Pressable>
-        </Link>
+        <View style={styles.buttonContainer}>
+          <Link href="/reminders" asChild>
+            <Pressable style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}>
+              <Text style={styles.primaryButtonText}>My Reminders</Text>
+            </Pressable>
+          </Link>
+          
+          <Link href="/settings" asChild>
+            <Pressable style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}>
+              <Text style={styles.secondaryButtonText}>Settings</Text>
+            </Pressable>
+          </Link>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Theme.colors.background,
+  },
+  content: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Theme.colors.background,
     padding: Theme.spacing.md,
   },
   title: {

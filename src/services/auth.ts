@@ -1,10 +1,12 @@
 import { apiClient } from './api.client';
 import { TokenStorage } from './storage';
+import { TelegramAuthService } from './telegramAuth.service';
+import { User } from '../types/user';
 
 interface AuthResponse {
     accessToken: string;
     refreshToken: string;
-    user: any; // Define User type strictly if shared types exist
+    user: User;
 }
 
 export const AuthService = {
@@ -21,11 +23,11 @@ export const AuthService = {
     /**
      * Login with Telegram Payload.
      */
+    /**
+     * Login with Telegram Payload.
+     */
     async loginWithTelegram(data: any): Promise<AuthResponse> {
-        const response = await apiClient.post<AuthResponse>('/auth/telegram', data);
-        const { accessToken, refreshToken } = response.data;
-        await TokenStorage.setTokens(accessToken, refreshToken);
-        return response.data;
+        return TelegramAuthService.completeAuth(data.code);
     },
 
     /**

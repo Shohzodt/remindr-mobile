@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import * as Linking from 'expo-linking';
+import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -40,39 +41,13 @@ export default function LoginScreen() {
     promptAsync();
   };
 
+  // Use the custom hook for Telegram Auth
+  const { initiateTelegramLogin, isLoading: isTelegramLoading } = useTelegramAuth();
+
   const handleTelegramLogin = async () => {
-    // Open Telegram Bot for Auth
-    // The bot should redirect back to remindr://auth/telegram?token=...
-    const botUrl = process.env.EXPO_PUBLIC_TELEGRAM_BOT_URL || 'https://t.me/remindr_bot?start=auth';
-    await Linking.openURL(botUrl);
+    await initiateTelegramLogin();
   };
 
-  // Handle Telegram Deep Link Return
-  useEffect(() => {
-    const handleDeepLink = (event: Linking.EventType) => {
-      const { url } = event;
-      const parsed = Linking.parse(url);
-      
-      // Check if it's the telegram auth callback
-      if (parsed.path === 'auth/telegram' && parsed.queryParams?.token) {
-        const token = parsed.queryParams.token;
-        if (typeof token === 'string') {
-          loginWithTelegram({ token });
-        }
-      }
-    };
-
-    const subscription = Linking.addEventListener('url', handleDeepLink);
-    
-    // Check initial URL
-    Linking.getInitialURL().then((url) => {
-      if (url) handleDeepLink({ url, nativeEvent: null } as any);
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
 
   return (
     <View style={styles.container}>
