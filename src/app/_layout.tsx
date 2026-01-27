@@ -7,7 +7,7 @@ import { View, StyleSheet } from "react-native";
 import { Theme } from "@/theme";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
-import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold } from "@expo-google-fonts/plus-jakarta-sans";
+import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold, PlusJakartaSans_400Regular_Italic, PlusJakartaSans_500Medium_Italic, PlusJakartaSans_600SemiBold_Italic, PlusJakartaSans_700Bold_Italic, PlusJakartaSans_800ExtraBold_Italic } from "@expo-google-fonts/plus-jakarta-sans";
 import * as SplashScreen from 'expo-splash-screen';
 
 SplashScreen.preventAutoHideAsync();
@@ -65,6 +65,11 @@ export default function RootLayout() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
+    PlusJakartaSans_400Regular_Italic,
+    PlusJakartaSans_500Medium_Italic,
+    PlusJakartaSans_600SemiBold_Italic,
+    PlusJakartaSans_700Bold_Italic,
+    PlusJakartaSans_800ExtraBold_Italic,
   });
 
   useEffect(() => {

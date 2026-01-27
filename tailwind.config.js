@@ -85,13 +85,41 @@ module.exports = {
     },
     extend: {
       colors: {
+        // Core Palette
         "bg-primary": "#050505",
         "bg-secondary": "#0f172a",
         "bg-surface": "#1e293b",
+        "logo-container": "#0B0B0F",
+
+        // Accents
         "accent-purple": "#8B5CF6",
         "accent-fuchsia": "#d946ef",
+        "telegram-blue": "#24A1DE",
+
+        // Text
         "text-primary": "#ffffff",
-        "text-secondary": "#a1a1aa",
+        "text-secondary": "#a1a1aa", // zinc-400
+        "text-muted": "#71717a", // zinc-500
+        "text-dim": "#52525b", // zinc-600
+
+        // Status
+        destructive: "#ef4444",
+        success: "#22c55e",
+      },
+      borderRadius: {
+        sm: "8px",
+        md: "16px",
+        lg: "24px",
+        xl: "32px",
+        xxl: "45px",
+        full: "9999px",
+      },
+      // NativeWind shadows (using elevation/boxShadow syntax)
+      boxShadow: {
+        xl: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+        "deep": "0 25px 60px rgba(0, 0, 0, 0.5)",
+        "heavy": "0 30px 70px rgba(0, 0, 0, 0.9)",
+        "accent": "0 10px 15px -3px rgba(139, 92, 246, 0.2)",
       },
       // Font weight utilities that map to font families (RN approach)
       fontWeight: {

@@ -1,6 +1,6 @@
 import { apiClient } from './api.client';
 import { TokenStorage } from './storage';
-import { User } from '../types/user';
+import { User } from '@/types';
 import * as Crypto from 'expo-crypto';
 
 interface AuthResponse {

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { TokenStorage } from '../services/storage';
 import { AuthService } from '../services/auth';
 
-import { User } from '../types/user';
+import { User } from '@/types';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -17,9 +17,9 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   user: null,
   isLoading: true,
-  loginWithGoogle: async () => {},
-  loginWithTelegram: async () => {},
-  logout: async () => {},
+  loginWithGoogle: async () => { },
+  loginWithTelegram: async () => { },
+  logout: async () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -34,11 +34,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const token = await TokenStorage.getAccessToken();
         if (token) {
-          // Optional: Validate token with backend or try refresh
+          // Validate token and get user profile
+          const userProfile = await AuthService.getProfile();
+          setUser(userProfile);
           setIsAuthenticated(true);
         }
       } catch (error) {
         console.error('Auth check failed', error);
+        // If profile fetch fails, token might be invalid
+        await TokenStorage.clearTokens();
+        setIsAuthenticated(false);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -50,8 +56,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const loginWithGoogle = async (idToken: string) => {
     try {
       setIsLoading(true);
-      const response = await AuthService.loginWithGoogle(idToken);
-      setUser(response.user);
+      const response = await AuthService.loginWithGoogle(idToken); // Sets tokens internally
+
+      // Fetch fresh profile
+      const userProfile = await AuthService.getProfile();
+      setUser(userProfile);
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Google login failed', error);
@@ -65,8 +74,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setIsLoading(true);
       const response = await AuthService.loginWithTelegram(data);
-      // Wait, verifyAndFetchProfile (completeAuth) returns { user, ... }
-      setUser(response.user);
+      await TokenStorage.setTokens(response.accessToken, response.refreshToken);
+
+      // Fetch fresh profile
+      const userProfile = await AuthService.getProfile();
+      setUser(userProfile);
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Telegram login failed', error);
