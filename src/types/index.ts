@@ -33,6 +33,13 @@ export interface User {
     provider: 'google' | 'telegram';
     createdAt: string;
     updatedAt: string;
+    // Billing Extensions
+    plan?: Plan;
+    subscription?: SubscriptionMetadata;
+    credits?: {
+        monthly: number;
+        addons: number;
+    };
 }
 
 export interface AuthTokens {

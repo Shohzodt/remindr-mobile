@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { useRemindersMock } from "@/hooks/useRemindersMock";
 import { ReminderCategory } from "@/types";
 import { Search, ArrowLeft, Filter, ChevronDown } from "lucide-react-native";
+import { Layout } from "@/constants/layout";
 
 const FILTERS = [
   { id: 'all', label: 'All' },
@@ -105,7 +106,7 @@ export default function RemindersScreen() {
             <SectionList
               sections={sections}
               keyExtractor={(item) => item.id}
-              contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
+              contentContainerStyle={{ ...Layout.tabBarAwareContent, paddingHorizontal: 24 }}
               stickySectionHeadersEnabled={false}
               renderSectionHeader={({ section: { title } }) => (
                 <View className="flex-row items-center gap-2 mb-4 mt-2">

@@ -4,6 +4,8 @@ import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, RefreshCw, Smartphone } from 'lucide-react-native'; // Icons approximation
 
+import { Theme } from "@/theme";
+import { Layout } from "@/constants/layout";
 import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/context/AuthContext';
 import { FontAwesome } from '@expo/vector-icons';
@@ -19,10 +21,11 @@ export default function SecuritySettingsScreen() {
             <Stack.Screen options={{ headerShown: false }} />
 
             <ScrollView
+                className="flex-1"
                 contentContainerStyle={{
+                    ...Layout.tabBarAwareContent,
                     paddingTop: insets.top + 20,
                     paddingHorizontal: 24,
-                    paddingBottom: 40
                 }}
                 showsVerticalScrollIndicator={false}
             >

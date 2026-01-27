@@ -1,19 +1,22 @@
 import React from 'react';
 import { View, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/Text';
 import { EventCard } from '@/components/EventCard';
 import { SoftLockPlaceholder } from '@/components/SoftLockPlaceholder';
 import { EmptyState } from '@/components/EmptyState';
 import { useAuth } from '@/context/AuthContext';
 import { useRemindersMock } from '@/hooks/useRemindersMock';
-import { Bell, CheckCircle, Shield, AlertTriangle } from 'lucide-react-native';
+import { Bell, CheckCircle, Shield, AlertTriangle, Plus } from 'lucide-react-native';
+import { Layout } from "@/constants/layout";
 
 export default function TimelineScreen() {
   const router = useRouter();
   const { user } = useAuth(); // Assuming useAuth provides user object
   const { reminders } = useRemindersMock(new Date().toISOString().split('T')[0]);
+  const { top: insetsTop } = useSafeAreaInsets();
+  const isAuthenticated = !!user;
 
   // Logic from Web
   const userPlan = 'Premium' as 'Premium' | 'Free' | 'Pro'; // Mocked for now to show all features
@@ -38,8 +41,12 @@ export default function TimelineScreen() {
     <View className="flex-1 bg-bg-primary">
       <SafeAreaView edges={['top']} className="flex-1">
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40, paddingTop: 20 }}
           className="flex-1"
+          contentContainerStyle={{
+            ...Layout.tabBarAwareContent,
+            paddingTop: 20,
+            paddingHorizontal: 24,
+          }}
           showsVerticalScrollIndicator={false}
         >
           {/* HEADER */}

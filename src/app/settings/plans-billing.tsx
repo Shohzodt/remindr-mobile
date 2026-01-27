@@ -13,6 +13,8 @@ import {
     Zap
 } from 'lucide-react-native';
 
+import { Theme } from "@/theme";
+import { Layout } from "@/constants/layout";
 import { Text } from '@/components/ui/Text';
 import { useBillingMock, AICreditPack } from '@/hooks/useBillingMock';
 import { Plan } from '@/types';
@@ -63,10 +65,11 @@ export default function PlansBillingScreen() {
             <Stack.Screen options={{ headerShown: false }} />
 
             <ScrollView
+                className="flex-1"
                 contentContainerStyle={{
+                    ...Layout.tabBarAwareContent,
                     paddingTop: insets.top + 20,
                     paddingHorizontal: 24,
-                    paddingBottom: 40
                 }}
                 showsVerticalScrollIndicator={false}
             >

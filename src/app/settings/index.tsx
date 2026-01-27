@@ -14,6 +14,7 @@ import { Text } from '@/components/ui/Text';
 import { LargeSettingsItem } from '@/components/LargeSettingsItem';
 import { PlanCard } from '@/components/PlanCard';
 import { useAuth } from '@/context/AuthContext';
+import { Layout } from '@/constants/layout';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -44,9 +45,9 @@ export default function SettingsScreen() {
 
       <ScrollView
         contentContainerStyle={{
+          ...Layout.tabBarAwareContent,
           paddingTop: insets.top + 20,
           paddingHorizontal: 24,
-          paddingBottom: 40
         }}
         showsVerticalScrollIndicator={false}
       >

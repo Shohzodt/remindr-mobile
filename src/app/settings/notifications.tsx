@@ -6,6 +6,8 @@ import { ArrowLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated';
 
+import { Theme } from "@/theme";
+import { Layout } from "@/constants/layout";
 import { Text } from '@/components/ui/Text';
 
 // Custom Toggle Component to match Web Design specific look
@@ -60,10 +62,11 @@ export default function NotificationsSettingsScreen() {
             <Stack.Screen options={{ headerShown: false }} />
 
             <ScrollView
+                className="flex-1"
                 contentContainerStyle={{
+                    ...Layout.tabBarAwareContent,
                     paddingTop: insets.top + 20,
                     paddingHorizontal: 24,
-                    paddingBottom: 40
                 }}
                 showsVerticalScrollIndicator={false}
             >

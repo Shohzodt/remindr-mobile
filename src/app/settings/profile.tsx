@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/context/AuthContext';
 import { Theme } from '@/theme';
+import { Layout } from "@/constants/layout";
 
 export default function ProfileSettingsScreen() {
     const router = useRouter();
@@ -22,10 +23,11 @@ export default function ProfileSettingsScreen() {
             <Stack.Screen options={{ headerShown: false }} />
 
             <ScrollView
+                className="flex-1"
                 contentContainerStyle={{
+                    ...Layout.tabBarAwareContent, // Use shared layout
                     paddingTop: insets.top + 20,
                     paddingHorizontal: 24,
-                    paddingBottom: 40
                 }}
                 showsVerticalScrollIndicator={false}
             >

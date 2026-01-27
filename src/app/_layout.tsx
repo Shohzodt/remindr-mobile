@@ -1,4 +1,4 @@
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Tabs, Stack, useRouter, useSegments } from "expo-router";
 import "../global.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
 import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold, PlusJakartaSans_400Regular_Italic, PlusJakartaSans_500Medium_Italic, PlusJakartaSans_600SemiBold_Italic, PlusJakartaSans_700Bold_Italic, PlusJakartaSans_800ExtraBold_Italic } from "@expo-google-fonts/plus-jakarta-sans";
 import * as SplashScreen from 'expo-splash-screen';
+import { TabBar } from "@/components/navigation/TabBar";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,23 +38,37 @@ function RootLayoutNav() {
     return <View style={styles.container} />;
   }
 
+  // If not authenticated, show Auth Stack
+  if (!isAuthenticated) {
+    return (
+      <View style={styles.container}>
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+        </Stack>
+      </View>
+    );
+  }
+
+  // Authenticated: Show Tabs
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <Stack
+      <Tabs
+        tabBar={props => <TabBar {...props} />}
         screenOptions={{
-          headerStyle: { backgroundColor: Theme.colors.surface },
-          headerTintColor: Theme.colors.text,
-          headerTitleStyle: { fontWeight: "bold", fontFamily: 'PlusJakartaSans_700Bold' },
-          contentStyle: { backgroundColor: Theme.colors.background },
-          headerShown: false, 
+          headerShown: false,
+          sceneStyle: { backgroundColor: '#050505' }
         }}
       >
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="index" options={{ title: "Home", headerShown: false }} />
-        <Stack.Screen name="reminders/index" options={{ title: "Reminders" }} />
-        <Stack.Screen name="settings/index" options={{ title: "Settings" }} />
-      </Stack>
+        <Tabs.Screen name="(timeline)" options={{ title: "Timeline" }} />
+        <Tabs.Screen name="discover/index" options={{ title: "Discover" }} />
+        <Tabs.Screen name="calendar/index" options={{ title: "Calendar" }} />
+        <Tabs.Screen name="settings" options={{ title: "Settings" }} />
+
+        {/* Hide other screens that are not main tabs from the tab bar but keep them accessible */}
+        <Tabs.Screen name="(auth)" options={{ href: null }} />
+      </Tabs>
     </View>
   );
 }
