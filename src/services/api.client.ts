@@ -60,7 +60,11 @@ apiClient.interceptors.response.use(
             } catch (refreshError) {
                 // Refresh failed - clear tokens so app can logout cleanly
                 const { TokenStorage } = await import('./storage');
+                const { authEvents } = await import('./auth.events');
+
                 await TokenStorage.clearTokens();
+                authEvents.triggerLogout();
+
                 return Promise.reject(refreshError);
             }
         }

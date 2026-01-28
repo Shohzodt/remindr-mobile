@@ -17,7 +17,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const { loginWithGoogle, loginWithTelegram } = useAuth();
-  
+
   // ... (keeping existing hooks) ...
   // Google Auth Request
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -50,10 +50,10 @@ export default function LoginScreen() {
 
 
   return (
-      <View className="flex-1 bg-bg-primary overflow-hidden min-h-screen">
+    <View className="flex-1 bg-bg-primary overflow-hidden min-h-screen">
       {/* Background Glow */}
       <View className="absolute -top-[20%] -left-[40%] w-[500px] h-[500px] pointer-events-none">
-         <Svg height="100%" width="100%">
+        <Svg height="100%" width="100%">
           <Defs>
             <RadialGradient
               id="grad"
@@ -74,7 +74,7 @@ export default function LoginScreen() {
 
       {/* Background Glow Bottom Right */}
       <View className="absolute -bottom-[10%] -right-[10%] w-72 h-72 pointer-events-none">
-         <Svg height="100%" width="100%">
+        <Svg height="100%" width="100%">
           <Defs>
             <RadialGradient
               id="grad-br"
@@ -94,52 +94,52 @@ export default function LoginScreen() {
       </View>
 
       <SafeAreaView className="flex-1">
-      <View className="flex-1 px-8 pt-20 pb-12 justify-between">
-        {/* Logo Section */}
-        <View className="flex-1 items-center justify-center mb-12">
-          <RemindrLogo size={160} style={{ marginBottom: 24 }} />
-          <Text className="text-5xl font-extrabold text-text-primary tracking-tighter mb-3 mt-6">
-            Remind
-            <Text className="text-accent-fuchsia">r</Text>
-          </Text>
-          <Text className="text-lg text-text-secondary mb-2 font-medium">Manage what matters.</Text>
-          <Text className="text-xs text-text-secondary text-center leading-5">
-            Smart reminders for deadlines, contracts, and{'\n'}important life events.
-          </Text>
-        </View>
+        <View className="flex-1 px-8 pt-20 pb-12 justify-between">
+          {/* Logo Section */}
+          <View className="flex-1 items-center justify-center mb-12">
+            <RemindrLogo size={160} style={{ marginBottom: 24 }} />
+            <Text className="text-5xl font-extrabold text-text-primary tracking-tighter mb-3 mt-6">
+              Remind
+              <Text className="text-accent-fuchsia">r</Text>
+            </Text>
+            <Text className="text-lg text-text-secondary mb-2 font-medium">Manage what matters.</Text>
+            <Text className="text-xs text-text-secondary text-center leading-5">
+              Smart reminders for deadlines, contracts, and{'\n'}important life events.
+            </Text>
+          </View>
 
-        {/* Buttons Section */}
-        <View className="w-full gap-4">
-          <TouchableOpacity 
-            className="flex-row items-center justify-center h-16 rounded-3xl w-full bg-white active:opacity-80" 
-            onPress={handleGoogleLogin}
-            disabled={!request}
-            activeOpacity={0.8}
-          >
-            <AntDesign name="google" size={24} color="black" style={{ marginRight: 12 }} />
-            <Text className="text-base font-semibold text-black">Continue with Google</Text>
-          </TouchableOpacity>
+          {/* Buttons Section */}
+          <View className="w-full gap-4">
+            <TouchableOpacity
+              className="flex-row items-center justify-center h-16 rounded-3xl w-full bg-white active:opacity-80"
+              onPress={handleGoogleLogin}
+              disabled={!request}
+              activeOpacity={0.8}
+            >
+              <AntDesign name="google" size={24} color="black" style={{ marginRight: 12 }} />
+              <Text className="text-base font-bold text-black">Continue with Google</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-            className="flex-row items-center justify-center h-16 rounded-3xl w-full bg-[#2AABEE] active:opacity-80" 
-            onPress={handleTelegramLogin}
-            activeOpacity={0.8}
-          >
-            <FontAwesome name="telegram" size={24} color="white" style={{ marginRight: 12 }} />
-            <Text className="text-base font-semibold text-white">Continue with Telegram</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              className="flex-row items-center justify-center h-16 rounded-3xl w-full bg-[#2AABEE] active:opacity-80"
+              onPress={handleTelegramLogin}
+              activeOpacity={0.8}
+            >
+              <FontAwesome name="telegram" size={24} color="white" style={{ marginRight: 12 }} />
+              <Text className="text-base font-bold text-white">Continue with Telegram</Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* Footer */}
-        <View className="items-center mt-12">
-          <Text className="text-[#444] text-[11px] font-bold tracking-[1px] mb-1">BY SIGNING IN, YOU AGREE TO OUR</Text>
-          <Text className="text-text-secondary text-[11px] font-bold tracking-[1.5px]">
-            TERMS OF SERVICE 
-            <Text className="text-[#52525c] text-[10px] font-extrabold tracking-[1px]"> & </Text>
-            <Text className="text-text-secondary">PRIVACY POLICY</Text>
-          </Text>
+          {/* Footer */}
+          <View className="items-center mt-12">
+            <Text className="text-[#444] text-[11px] font-bold tracking-[1px] mb-1">BY SIGNING IN, YOU AGREE TO OUR</Text>
+            <Text className="text-text-secondary text-[11px] font-bold tracking-[1.5px]">
+              TERMS OF SERVICE
+              <Text className="text-[#52525c] text-[10px] font-extrabold tracking-[1px]"> & </Text>
+              <Text className="text-text-secondary">PRIVACY POLICY</Text>
+            </Text>
+          </View>
         </View>
-      </View>
       </SafeAreaView>
     </View>
   );

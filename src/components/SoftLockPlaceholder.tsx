@@ -11,18 +11,25 @@ interface SoftLockPlaceholderProps {
 
 export const SoftLockPlaceholder = ({ title, description, onPress }: SoftLockPlaceholderProps) => {
   return (
-    <Pressable 
+    <Pressable
       onPress={onPress}
-      className="bg-[#0B0B0F]/60 border border-white/5 rounded-[32px] p-6 flex-row items-center gap-5 active:opacity-80"
-      style={{ opacity: 0.6 }} // grayscale effect simulated with opacity
+      className="opacity-[0.6] bg-[#050505] border border-white/10 rounded-[32px] p-5 flex-row items-center gap-6 active:opacity-90"
     >
-      <View className="w-12 h-12 rounded-2xl bg-white/[0.03] items-center justify-center shrink-0">
+      <View className="w-12 h-12 rounded-2xl bg-zinc-900/50 items-center justify-center shrink-0 border border-white/5">
         <Lock size={20} color="#52525b" />
       </View>
-      
+
       <View className="flex-1">
-        <Text variant="micro" className="text-text-muted mb-1">{title}</Text>
-        <Text variant="micro" className="text-text-dim normal-case leading-tight font-medium" style={{ fontSize: 10 }}>
+        <Text
+          weight="extrabold"
+          className="text-zinc-500 mb-1 uppercase tracking-[1px] text-xs"
+        >
+          {title}
+        </Text>
+        <Text
+          weight="bold"
+          className="text-2xs text-zinc-600 leading-5"
+        >
           {description}
         </Text>
       </View>

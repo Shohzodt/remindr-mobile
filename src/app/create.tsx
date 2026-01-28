@@ -54,7 +54,7 @@ export default function CreateReminderScreen() {
         setMode(currentMode);
     };
 
-    const { createReminder, isLoading } = useReminders();
+    const { createReminder, isSaving } = useReminders();
 
     const handleCreate = async () => {
         if (!title.trim()) {
@@ -228,6 +228,7 @@ export default function CreateReminderScreen() {
                                         value={date}
                                         mode={mode}
                                         is24Hour={true}
+                                        minimumDate={new Date()}
                                         display={Platform.OS === 'ios' ? (mode === 'date' ? 'inline' : 'spinner') : 'default'}
                                         onChange={onChange}
                                         themeVariant="dark"
@@ -357,7 +358,7 @@ export default function CreateReminderScreen() {
                             activeOpacity={0.9}
                             className="w-full h-16"
                             onPress={handleCreate}
-                            disabled={isLoading}
+                            disabled={isSaving}
                         >
                             <LinearGradient
                                 colors={['#e12afb', '#9810fa']}
@@ -369,10 +370,10 @@ export default function CreateReminderScreen() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    opacity: isLoading ? 0.7 : 1
+                                    opacity: isSaving ? 0.7 : 1
                                 }}
                             >
-                                {isLoading ? (
+                                {isSaving ? (
                                     <ActivityIndicator color="white" />
                                 ) : (
                                     <Text className="text-white font-sans-extrabold text-base tracking-wide">

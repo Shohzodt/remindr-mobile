@@ -37,5 +37,13 @@ export const RemindersService = {
      */
     async delete(id: string): Promise<void> {
         await apiClient.delete(`/reminders/${id}`);
+    },
+
+    /**
+     * Update a reminder
+     */
+    async update(id: string, data: Partial<CreateReminderDto>): Promise<Reminder> {
+        const response = await apiClient.patch<Reminder>(`/reminders/${id}`, data);
+        return response.data;
     }
 };

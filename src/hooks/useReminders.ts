@@ -1,43 +1,68 @@
-import { useState } from 'react';
 import { RemindersService, CreateReminderDto } from '@/services/reminders.service';
-import { Reminder } from '@/types';
 import * as Haptics from 'expo-haptics';
-import { useAuth } from '@/context/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+export const REMINDERS_QUERY_KEY = ['reminders'];
 
 export function useReminders() {
-    const { logout } = useAuth();
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
-    const createReminder = async (data: CreateReminderDto): Promise<Reminder | null> => {
-        try {
-            setIsLoading(true);
-            setError(null);
-            const reminder = await RemindersService.create(data);
+    // 1. Fetch Reminders
+    const {
+        data: reminders = [],
+        isLoading: isInitialLoading,
+        isFetching,
+        error: fetchError,
+        refetch
+    } = useQuery({
+        queryKey: REMINDERS_QUERY_KEY,
+        queryFn: () => RemindersService.getAll(),
+    });
+
+
+    const createMutation = useMutation({
+        mutationFn: (data: CreateReminderDto) => RemindersService.create(data),
+        onSuccess: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            return reminder;
-        } catch (err: any) {
+            // Invalidate and refetch
+            queryClient.invalidateQueries({ queryKey: REMINDERS_QUERY_KEY });
+        },
+        onError: async (err: any) => {
             console.error('Create reminder failed', err);
-
-            if (err.response?.status === 401) {
-                // If we get a 401 here, the refresh logic in interceptor failed
-                // So we must log the user out to reset state
-                await logout();
-                return null;
-            }
-
-            const message = err.response?.data?.message || 'Failed to create reminder';
-            setError(message);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            return null;
-        } finally {
-            setIsLoading(false);
+        }
+    });
+
+    // 3. Toggle/Update Mutation
+    const updateMutation = useMutation({
+        mutationFn: ({ id, data }: { id: string; data: Partial<CreateReminderDto> }) => RemindersService.update(id, data),
+        onSuccess: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            queryClient.invalidateQueries({ queryKey: REMINDERS_QUERY_KEY });
+        },
+        onError: async (err: any) => {
+            // 401s are handled freely by interceptor
+            console.log('Update failed', err);
+        }
+    });
+
+    const createReminder = async (data: CreateReminderDto): Promise<boolean> => {
+        try {
+            await createMutation.mutateAsync(data);
+            return true;
+        } catch (error) {
+            return false;
         }
     };
 
     return {
+        reminders,
+        isLoading: isInitialLoading, // Only true when no data is available
+        isFetching, // True whenever a request is in flight
+        isSaving: createMutation.isPending || updateMutation.isPending,
+        error: (fetchError as any)?.message || (createMutation.error as any)?.response?.data?.message || null,
         createReminder,
-        isLoading,
-        error,
+        toggleReminder: (id: string, status: string) => updateMutation.mutate({ id, data: { status } }),
+        refetch
     };
 }

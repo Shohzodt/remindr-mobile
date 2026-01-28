@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { TokenStorage } from '../services/storage';
 import { AuthService } from '../services/auth';
+import { authEvents } from '../services/auth.events';
 
 import { User } from '@/types';
 
@@ -55,6 +56,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     checkAuth();
+
+    // Subscribe to global logout events (from api interceptor)
+    const unsubscribe = authEvents.subscribe(() => {
+      logout();
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const loginWithGoogle = async (idToken: string) => {

@@ -1,12 +1,12 @@
 import React, { useRef } from 'react';
 import { View, TouchableOpacity, ScrollView } from 'react-native';
 import { Text } from '@/components/ui/Text';
-import { format, addDays, isSameDay, eachDayOfInterval } from 'date-fns';
+import { format, addDays, isSameDay, eachDayOfInterval, startOfDay } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface CalendarStripProps {
-    selectedDate: Date;
-    onSelectDate: (date: Date) => void;
+    selectedDate: string; // YYYY-MM-DD
+    onSelectDate: (date: string) => void;
     dots?: Record<string, number>; // dateString (YYYY-MM-DD) -> count
 }
 
@@ -15,7 +15,7 @@ export const CalendarStrip = ({ selectedDate, onSelectDate, dots = {} }: Calenda
 
     // Use a fixed anchor for "Today" so list doesn't shift
     // Range: -15 days ... Today ... +15 days
-    const anchorDate = new Date();
+    const anchorDate = startOfDay(new Date());
     const startDate = addDays(anchorDate, -2);
     const days = eachDayOfInterval({
         start: startDate,
@@ -38,15 +38,15 @@ export const CalendarStrip = ({ selectedDate, onSelectDate, dots = {} }: Calenda
                 contentContainerStyle={{ paddingHorizontal: 24, gap: 12 }}
             >
                 {days.map((date, index) => {
-                    const isSelected = isSameDay(date, selectedDate);
-                    const isToday = isSameDay(date, new Date());
                     const dateStr = format(date, 'yyyy-MM-dd');
+                    const isSelected = dateStr === selectedDate;
+                    const isToday = isSameDay(date, new Date());
                     const hasDots = dots[dateStr] ? dots[dateStr] > 0 : false;
 
                     return (
                         <TouchableOpacity
                             key={date.toString()}
-                            onPress={() => onSelectDate(date)}
+                            onPress={() => onSelectDate(dateStr)}
                             className="items-center justify-center w-[52px]"
                         >
                             <View className={`w-[52px] h-[72px] rounded-2xl overflow-hidden justify-between py-2 items-center ${isToday && !isSelected ? 'border border-[#8B5CF6]' : ''}`}>
