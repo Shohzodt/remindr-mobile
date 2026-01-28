@@ -22,13 +22,13 @@ export const SoftLockPlaceholder = ({ title, description, onPress }: SoftLockPla
       <View className="flex-1">
         <Text
           weight="extrabold"
-          className="text-zinc-500 mb-1 uppercase tracking-[1px] text-xs"
+          className="text-xs text-zinc-500 mb-1 uppercase tracking-[1px]"
         >
           {title}
         </Text>
         <Text
           weight="bold"
-          className="text-2xs text-zinc-600 leading-5"
+          className="text-xxs text-zinc-600 leading-5"
         >
           {description}
         </Text>

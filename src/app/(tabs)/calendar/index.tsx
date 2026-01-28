@@ -89,7 +89,7 @@ export default function CalendarScreen() {
                                             <EventCard
                                                 item={item}
                                                 userPlan={userPlan}
-                                                onClick={() => { }}
+                                                onClick={() => router.push(`/reminders/${item.id}`)}
                                                 onToggle={() => toggleReminder(item.id, item.status === 'completed' ? 'active' : 'completed')}
                                             />
                                         </View>

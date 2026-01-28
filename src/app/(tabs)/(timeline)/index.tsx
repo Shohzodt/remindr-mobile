@@ -124,7 +124,7 @@ export default function TimelineScreen() {
                       item={item}
                       userPlan={userPlan}
                       type="protected"
-                      onClick={() => { }}
+                      onClick={() => router.push(`/reminders/${item.id}`)}
                     />
                   ))
                 ) : (
@@ -155,7 +155,7 @@ export default function TimelineScreen() {
                           item={item}
                           userPlan={userPlan}
                           type="risk"
-                          onClick={() => { }}
+                          onClick={() => router.push(`/reminders/${item.id}`)}
                         />
                       ))}
                       {riskReminders.map(item => (
@@ -164,7 +164,7 @@ export default function TimelineScreen() {
                           item={item}
                           userPlan={userPlan}
                           type="risk"
-                          onClick={() => { }}
+                          onClick={() => router.push(`/reminders/${item.id}`)}
                         />
                       ))}
                     </>
@@ -197,7 +197,7 @@ export default function TimelineScreen() {
                       key={item.id}
                       item={item}
                       userPlan={userPlan}
-                      onClick={() => { }}
+                      onClick={() => router.push(`/reminders/${item.id}`)}
                       onToggle={() => toggleReminder(item.id, item.status === 'completed' ? 'active' : 'completed')}
                     />
                   ))

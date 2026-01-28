@@ -39,10 +39,24 @@ export function useReminders() {
         onSuccess: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             queryClient.invalidateQueries({ queryKey: REMINDERS_QUERY_KEY });
+            queryClient.invalidateQueries({ queryKey: ['reminder'] });
         },
         onError: async (err: any) => {
             // 401s are handled freely by interceptor
             console.log('Update failed', err);
+        }
+    });
+
+    // 4. Delete Mutation
+    const deleteMutation = useMutation({
+        mutationFn: (id: string) => RemindersService.delete(id),
+        onSuccess: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            queryClient.invalidateQueries({ queryKey: REMINDERS_QUERY_KEY });
+        },
+        onError: async (err: any) => {
+            console.error('Delete failed', err);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
     });
 
@@ -55,14 +69,33 @@ export function useReminders() {
         }
     };
 
+    const deleteReminder = async (id: string): Promise<boolean> => {
+        try {
+            await deleteMutation.mutateAsync(id);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    };
+
     return {
         reminders,
         isLoading: isInitialLoading, // Only true when no data is available
         isFetching, // True whenever a request is in flight
-        isSaving: createMutation.isPending || updateMutation.isPending,
-        error: (fetchError as any)?.message || (createMutation.error as any)?.response?.data?.message || null,
+        isSaving: createMutation.isPending || updateMutation.isPending || deleteMutation.isPending,
+        error: (fetchError as any)?.message || (createMutation.error as any)?.response?.data?.message || (deleteMutation.error as any)?.response?.data?.message || null,
         createReminder,
+        deleteReminder,
         toggleReminder: (id: string, status: string) => updateMutation.mutate({ id, data: { status } }),
         refetch
     };
+};
+
+
+export function useReminder(id?: string) {
+    return useQuery({
+        queryKey: ['reminder', id],
+        queryFn: () => RemindersService.getOne(id!),
+        enabled: !!id,
+    });
 }

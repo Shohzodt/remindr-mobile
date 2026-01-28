@@ -68,6 +68,18 @@ function RootLayoutNav() {
             headerShown: false,
           }}
         />
+
+        <Stack.Screen
+          name="reminders/[id]"
+          options={{
+            presentation: 'modal',
+            animation: 'default',
+            headerShown: false,
+            sheetAllowedDetents: [0.9],
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 24,
+          }}
+        />
       </Stack>
     </View>
   );

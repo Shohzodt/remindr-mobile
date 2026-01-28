@@ -33,6 +33,14 @@ export const RemindersService = {
     },
 
     /**
+     * Get a single reminder
+     */
+    async getOne(id: string): Promise<Reminder> {
+        const response = await apiClient.get<Reminder>(`/reminders/${id}`);
+        return response.data;
+    },
+
+    /**
      * Delete a reminder
      */
     async delete(id: string): Promise<void> {

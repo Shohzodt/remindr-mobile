@@ -15,15 +15,15 @@ module.exports = {
     // Override default fontSize with pixel-based values (no rem)
     // Each entry: [fontSize, { lineHeight }]
     fontSize: {
-      "2xs": ["10px", { lineHeight: "14px" }],
+      "xxs": ["10px", { lineHeight: "14px" }],
       xs: ["12px", { lineHeight: "16px" }],
       sm: ["14px", { lineHeight: "20px" }],
       base: ["16px", { lineHeight: "24px" }],
       lg: ["18px", { lineHeight: "26px" }],
       xl: ["20px", { lineHeight: "28px" }],
       "2xl": ["24px", { lineHeight: "32px" }],
-      "3xl": ["30px", { lineHeight: "38px" }],
-      "4xl": ["36px", { lineHeight: "44px" }],
+      "slarge": ["30px", { lineHeight: "38px" }],
+      "large": ["36px", { lineHeight: "44px" }],
       "5xl": ["48px", { lineHeight: "56px" }],
       "6xl": ["60px", { lineHeight: "68px" }],
     },

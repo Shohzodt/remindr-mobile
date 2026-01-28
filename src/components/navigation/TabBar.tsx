@@ -53,7 +53,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                     />
 
                     <TouchableOpacity
-                        className="w-14 h-14 mb-2 mx-4"
+                        className="w-14 h-14 mb-2 mx-4 rounded-full"
                         activeOpacity={0.9}
                         onPress={handleCreate}
                         style={styles.shadow}
