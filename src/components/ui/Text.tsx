@@ -9,13 +9,13 @@ interface TypographyProps extends TextProps {
   className?: string;
 }
 
-export const Text = ({ 
-  variant = 'body', 
-  weight, 
+export const Text = ({
+  variant = 'body',
+  weight,
   color = 'text-primary',
-  className, 
+  className,
   style,
-  ...props 
+  ...props
 }: TypographyProps) => {
   // Map variants to specific default weights if not explicitly provided
   const defaultWeights: Record<string, NonNullable<TypographyProps['weight']>> = {
@@ -40,15 +40,16 @@ export const Text = ({
   };
 
   const weights = {
-    normal: 'font-sans font-normal',
-    medium: 'font-sans-medium font-medium',
-    semibold: 'font-sans-semibold font-semibold',
-    bold: 'font-sans-bold font-bold',
-    extrabold: 'font-sans-extrabold font-extrabold',
+    normal: 'font-sans',
+    medium: 'font-sans-medium',
+    semibold: 'font-sans-semibold',
+    bold: 'font-sans-bold',
+    extrabold: 'font-sans-extrabold',
   };
 
   return (
-    <RNText 
+    <RNText
+      allowFontScaling={false}
       className={`
         ${variants[variant]} 
         ${weights[activeWeight]} 
@@ -56,7 +57,7 @@ export const Text = ({
         ${className || ''}
       `}
       style={style}
-      {...props} 
+      {...props}
     />
   );
 };

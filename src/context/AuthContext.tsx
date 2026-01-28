@@ -39,8 +39,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(userProfile);
           setIsAuthenticated(true);
         }
-      } catch (error) {
-        console.error('Auth check failed', error);
+      } catch (error: any) {
+        if (error.response?.status !== 401) {
+          console.error('Auth check failed', error);
+        } else {
+          console.log('Session expired or invalid, logging out.');
+        }
         // If profile fetch fails, token might be invalid
         await TokenStorage.clearTokens();
         setIsAuthenticated(false);

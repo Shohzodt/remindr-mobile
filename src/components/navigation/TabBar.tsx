@@ -17,7 +17,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     // Create Button Handler
     const handleCreate = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        console.log('Create button pressed');
+        router.push('/create');
     };
 
     return (

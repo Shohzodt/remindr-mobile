@@ -29,12 +29,12 @@ module.exports = {
     },
     // Override default lineHeight (for manual leading-* usage)
     lineHeight: {
-      none: "1",
-      tight: "1.1",
-      snug: "1.2",
-      normal: "1.4",
-      relaxed: "1.5",
-      loose: "1.75",
+      none: "16px",
+      tight: "20px",
+      snug: "24px",
+      normal: "24px",
+      relaxed: "28px",
+      loose: "32px",
       // Pixel-based line-heights
       3: "12px",
       4: "16px",

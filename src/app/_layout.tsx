@@ -50,25 +50,25 @@ function RootLayoutNav() {
     );
   }
 
-  // Authenticated: Show Tabs
+  // Authenticated: Show Main Stack (Tabs + Modal)
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <Tabs
-        tabBar={props => <TabBar {...props} />}
-        screenOptions={{
-          headerShown: false,
-          sceneStyle: { backgroundColor: '#050505' }
-        }}
-      >
-        <Tabs.Screen name="(timeline)" options={{ title: "Timeline" }} />
-        <Tabs.Screen name="discover/index" options={{ title: "Discover" }} />
-        <Tabs.Screen name="calendar/index" options={{ title: "Calendar" }} />
-        <Tabs.Screen name="settings" options={{ title: "Settings" }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* Main Tabs Group */}
+        <Stack.Screen name="(tabs)" />
 
-        {/* Hide other screens that are not main tabs from the tab bar but keep them accessible */}
-        <Tabs.Screen name="(auth)" options={{ href: null }} />
-      </Tabs>
+        {/* Create Modal - Covers Tabs */}
+        <Stack.Screen
+          name="create"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_bottom', // Explicit animation
+            gestureEnabled: true,
+            headerShown: false,
+          }}
+        />
+      </Stack>
     </View>
   );
 }

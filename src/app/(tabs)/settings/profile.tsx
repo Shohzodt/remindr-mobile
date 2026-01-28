@@ -134,7 +134,7 @@ export default function ProfileSettingsScreen() {
                         className="w-full h-16"
                     >
                         <LinearGradient
-                            colors={['#9333ea', '#ec4899']}
+                            colors={['#e12afb', '#9810fa']}
                             start={{ x: 0, y: 1 }}
                             end={{ x: 1, y: 0 }}
                             style={{

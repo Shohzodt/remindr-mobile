@@ -16,7 +16,9 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "LSApplicationQueriesSchemes": ["tg"]
+        "LSApplicationQueriesSchemes": [
+          "tg"
+        ]
       }
     },
     "android": {
@@ -38,7 +40,8 @@
     "plugins": [
       "expo-secure-store",
       "expo-web-browser",
-      "expo-font"
+      "expo-font",
+      "@react-native-community/datetimepicker"
     ]
   }
 }
