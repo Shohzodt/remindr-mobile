@@ -1,14 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { View, TextInput, TouchableOpacity, ScrollView, Platform, KeyboardAvoidingView, Switch, Pressable, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Calendar as CalendarIcon, Clock, Mic, Info, MapPin, FileText, Lock } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Theme } from '@/theme';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { useReminders } from '@/hooks/useReminders';
+import { Alert, ActivityIndicator } from 'react-native';
+import { ReminderStatus, ReminderSource, ReminderPriority } from '@/types';
 
 // Mock Categories
 const CATEGORIES = [
@@ -52,12 +54,46 @@ export default function CreateReminderScreen() {
         setMode(currentMode);
     };
 
-    const handleCreate = () => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        // Mock API Call
-        console.log('Creating reminder:', { title, notes, location, selectedCategory, isProtected });
-        router.back();
+    const { createReminder, isLoading } = useReminders();
+
+    const handleCreate = async () => {
+        if (!title.trim()) {
+            Alert.alert('Missing Title', 'Please describe your reminder.');
+            return;
+        }
+
+        // Format Date: YYYY-MM-DD
+        const dateStr = date.toISOString().split('T')[0];
+
+        // Format Time: HH:mm
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const timeStr = `${hours}:${minutes}`;
+
+        // Default to LOW priority if not specified (could add priority picker later)
+        // Default notifyBefore to 15 mins
+        const success = await createReminder({
+            title,
+            note: notes,
+            location,
+            date: dateStr,
+            time: timeStr,
+            category: selectedCategory,
+            isProtected,
+            priority: ReminderPriority.MEDIUM,
+            status: ReminderStatus.ACTIVE,
+            source: ReminderSource.MANUAL,
+            notifyBefore: 15
+        });
+
+        if (success) {
+            // Haptics handled in hook
+            router.back();
+        }
+        // Error alerts handled in hook or can be added here if needed
     };
+
+    const insets = useSafeAreaInsets();
 
     return (
         <View className="flex-1" style={{ backgroundColor: '#000000' }}>
@@ -71,7 +107,7 @@ export default function CreateReminderScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     className="flex-1"
                 >
-                    <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
+                    <ScrollView style={{ paddingTop: insets.top }} className="flex-1 px-5" showsVerticalScrollIndicator={false}>
 
                         {/* Header */}
                         <View className="flex-column justify-between mb-8">
@@ -320,6 +356,8 @@ export default function CreateReminderScreen() {
                         <TouchableOpacity
                             activeOpacity={0.9}
                             className="w-full h-16"
+                            onPress={handleCreate}
+                            disabled={isLoading}
                         >
                             <LinearGradient
                                 colors={['#e12afb', '#9810fa']}
@@ -330,12 +368,17 @@ export default function CreateReminderScreen() {
                                     borderRadius: 24,
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center'
+                                    justifyContent: 'center',
+                                    opacity: isLoading ? 0.7 : 1
                                 }}
                             >
-                                <Text className="text-white font-sans-extrabold text-base tracking-wide">
-                                    Create Reminder
-                                </Text>
+                                {isLoading ? (
+                                    <ActivityIndicator color="white" />
+                                ) : (
+                                    <Text className="text-white font-sans-extrabold text-base tracking-wide">
+                                        Create Reminder
+                                    </Text>
+                                )}
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>
