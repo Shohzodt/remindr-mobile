@@ -35,12 +35,35 @@ export default function TimelineScreen() {
   const isFree = userPlan === 'Free';
   const showUrgency = !isFree;
 
+  // Helper to check if reminder is in the past
+  const isPast = (dateStr: string, timeStr: string) => {
+    const reminderDate = new Date(`${dateStr}T${timeStr}:00`);
+    return reminderDate < new Date();
+  };
+
   // Mocked filtering
   const protectedDeadlines = reminders.filter(r => r.isGuardian || r.priority === 'must');
   const lockedInReminders = reminders.filter(r => r.decisionControl?.hardDeadline?.enabled);
   const riskReminders = reminders.filter(r => r.priority === 'high' || r.risk); // Rough mapping
-  const upNextReminders = reminders.filter(r => !r.isGuardian && !r.decisionControl?.hardDeadline?.enabled).slice(0, 4); // Everything else, limit to 4
-  const pastReminders: import('@/types').Reminder[] = []; // Mock empty for now
+
+  // Time-based filtering for general reminders
+  const generalReminders = reminders.filter(r =>
+    !r.isGuardian &&
+    !r.decisionControl?.hardDeadline?.enabled &&
+    // distinct from risk if risk is defined by priority too, avoiding dupes if needed
+    // For now simplistic exclusion of already handled categories if they overlap
+    !protectedDeadlines.includes(r) &&
+    !lockedInReminders.includes(r)
+  );
+
+  const upcomingReminders = generalReminders.filter(r => !isPast(r.date, r.time));
+  const pastReminders = generalReminders.filter(r => isPast(r.date, r.time)).sort((a, b) => {
+    const da = new Date(`${a.date}T${a.time}:00`);
+    const db = new Date(`${b.date}T${b.time}:00`);
+    return db.getTime() - da.getTime(); // Newest first
+  });
+
+  const upNextReminders = upcomingReminders.slice(0, 4);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -76,19 +99,19 @@ export default function TimelineScreen() {
             {/* HEADER */}
             <View className="flex-row justify-between items-start mb-10">
               <View>
-                <Text variant="h1" weight="extrabold" className="text-white mb-2">Timeline</Text>
-                <Text variant="body" weight="medium" className="text-text-muted">
+                <Text className="text-large font-sans-extrabold text-white">Timeline</Text>
+                <Text className="text-md font-sans-medium text-text-muted">
                   {getGreeting()}, {user?.displayName?.split(' ')[0] || 'User'}
                 </Text>
               </View>
 
               <View className="flex-row gap-3">
                 <TouchableOpacity
-                  onPress={() => router.push('/reminders')} // Assuming notifications route match
-                  className="p-2.5 bg-white/5 rounded-full border border-white/10 active:scale-95 items-center justify-center relative"
+                  onPress={() => router.push('/notifications')}
+                  className="w-10 h-10 rounded-full border border-white/20 bg-zinc-900 items-center justify-center border border-white/5 active:bg-zinc-800 relative"
                 >
+                  <View className="absolute top-2.5 right-3 w-2 h-2 rounded-full bg-accent-purple border border-[#151518] z-10" />
                   <Bell size={20} color="#ffffff" />
-                  <View className="absolute top-2.5 right-2.5 w-2 h-2 bg-purple-500 rounded-full border-2 border-[#050505]" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -182,7 +205,7 @@ export default function TimelineScreen() {
             <View className="mb-12">
               <View className="flex-row justify-between items-end px-1 mb-6">
                 <View className="flex-row items-center gap-2.5">
-                  <Text variant="h3" weight="extrabold" className="text-white">Up Next</Text>
+                  <Text className="text-two-xl font-sans-extrabold text-white">Up Next</Text>
                   <View className="w-[6px] h-[6px] rounded-full bg-[#E91E63] mt-[2px]" />
                 </View>
                 <TouchableOpacity onPress={() => router.push('/reminders')}>
@@ -219,8 +242,14 @@ export default function TimelineScreen() {
               <View className="gap-3">
                 {pastReminders.length > 0 ? (
                   pastReminders.map(item => (
-                    // Simple placeholder for history item
-                    <View key={item.id}><Text className="text-white">{item.title}</Text></View>
+                    <EventCard
+                      key={item.id}
+                      item={item}
+                      userPlan={userPlan}
+                      dimmed={true} // Add visual indication it's past
+                      onClick={() => router.push(`/reminders/${item.id}`)}
+                      onToggle={() => toggleReminder(item.id, item.status === 'completed' ? 'active' : 'completed')}
+                    />
                   ))
                 ) : (
                   <Text variant="micro" className="text-text-dim text-center py-6">No previous records</Text>

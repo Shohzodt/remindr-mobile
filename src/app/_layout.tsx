@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold, PlusJakartaSans_400Regular_Italic, PlusJakartaSans_500Medium_Italic, PlusJakartaSans_600SemiBold_Italic, PlusJakartaSans_700Bold_Italic, PlusJakartaSans_800ExtraBold_Italic } from "@expo-google-fonts/plus-jakarta-sans";
 import * as SplashScreen from 'expo-splash-screen';
 import { TabBar } from "@/components/navigation/TabBar";
+import { NotificationService } from "@/services/notifications.service";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -19,6 +20,20 @@ function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  useEffect(() => {
+    // Notification Listener
+    const subscription = NotificationService.addNotificationResponseReceivedListener((reminderId) => {
+      // Navigate to details
+      // We use router.push. Note: if app is cold start, might need logic handling.
+      // For now simple routing:
+      router.push(`/reminders/${reminderId}`);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [router]);
 
   useEffect(() => {
     if (isLoading) return;

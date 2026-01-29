@@ -62,8 +62,11 @@ export default function CreateReminderScreen() {
             return;
         }
 
-        // Format Date: YYYY-MM-DD
-        const dateStr = date.toISOString().split('T')[0];
+        // Format Date: YYYY-MM-DD (Local Time)
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
 
         // Format Time: HH:mm
         const hours = date.getHours().toString().padStart(2, '0');

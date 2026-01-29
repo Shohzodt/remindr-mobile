@@ -31,8 +31,12 @@ export const useTelegramAuth = () => {
             try {
                 setIsLoading(true);
                 // 4. Verify & Login
-                // Pass token to existing context action
-                await loginWithTelegram({ code: token });
+                // Pass tokens to existing context action
+                if (typeof token === 'string') {
+                    await loginWithTelegram({ code: token });
+                } else {
+                    await loginWithTelegram({ code: token.accessToken, refreshToken: token.refreshToken || undefined });
+                }
             } catch (error) {
                 console.error('Deep link login failed:', error);
                 Alert.alert('Login Failed', 'Could not verify Telegram login.');

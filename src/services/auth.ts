@@ -20,8 +20,8 @@ export const AuthService = {
     /**
      * Login with Telegram Payload.
      */
-    async loginWithTelegram(data: any): Promise<AuthResponse> {
-        return TelegramAuthService.completeAuth(data.code);
+    async loginWithTelegram(data: { code: string; refreshToken?: string }): Promise<AuthResponse> {
+        return TelegramAuthService.completeAuth(data.code, data.refreshToken);
     },
 
     /**

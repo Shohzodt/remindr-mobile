@@ -1,4 +1,5 @@
 import { RemindersService, CreateReminderDto } from '@/services/reminders.service';
+import { NotificationService } from '@/services/notifications.service';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -22,8 +23,15 @@ export function useReminders() {
 
     const createMutation = useMutation({
         mutationFn: (data: CreateReminderDto) => RemindersService.create(data),
-        onSuccess: () => {
+        onSuccess: async (data: any) => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+            // Schedule local notification
+            const hasPermission = await NotificationService.requestPermissions();
+            if (hasPermission) {
+                await NotificationService.scheduleReminder(data);
+            }
+
             // Invalidate and refetch
             queryClient.invalidateQueries({ queryKey: REMINDERS_QUERY_KEY });
         },
@@ -36,8 +44,16 @@ export function useReminders() {
     // 3. Toggle/Update Mutation
     const updateMutation = useMutation({
         mutationFn: ({ id, data }: { id: string; data: Partial<CreateReminderDto> }) => RemindersService.update(id, data),
-        onSuccess: () => {
+        onSuccess: async (data: any) => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+            // Reschedule if date/time changed (simplified logic)
+            // In real app we might check if relevant fields changed
+            // For now, if full reminder data comes back, reschedule
+            if (data && data.date && data.time) {
+                await NotificationService.scheduleReminder(data);
+            }
+
             queryClient.invalidateQueries({ queryKey: REMINDERS_QUERY_KEY });
             queryClient.invalidateQueries({ queryKey: ['reminder'] });
         },
@@ -50,8 +66,13 @@ export function useReminders() {
     // 4. Delete Mutation
     const deleteMutation = useMutation({
         mutationFn: (id: string) => RemindersService.delete(id),
-        onSuccess: () => {
+        onSuccess: (data, variables) => {
+            const id = variables; // mutationFn argument
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+            // Cancel notification
+            NotificationService.cancelReminder(id);
+
             queryClient.invalidateQueries({ queryKey: REMINDERS_QUERY_KEY });
         },
         onError: async (err: any) => {

@@ -14,13 +14,18 @@ const getFirstParam = (param: string | string[] | undefined): string | null => {
  * Supports:
  * 1. remindr://login?token=<JWT> (New flow)
  */
-export const parseTelegramAuthCode = (url: string): string | null => {
+export const parseTelegramAuthCode = (url: string): { accessToken: string | null; refreshToken: string | null } | null => {
     try {
         const parsed = Linking.parse(url);
 
         // Strategy 1: Check for 'login' path with 'token' (Preferred)
         if (parsed.path === 'login') {
-            return getFirstParam(parsed.queryParams?.token);
+            const accessToken = getFirstParam(parsed.queryParams?.token);
+            const refreshToken = getFirstParam(parsed.queryParams?.refreshToken);
+
+            if (!accessToken) return null;
+
+            return { accessToken, refreshToken };
         }
 
         return null;

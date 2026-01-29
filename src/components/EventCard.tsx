@@ -22,6 +22,7 @@ interface EventCardProps {
   userPlan?: Plan;
   isLocked?: boolean;
   type?: 'protected' | 'risk' | 'normal';
+  dimmed?: boolean;
   onClick: () => void;
 }
 
@@ -30,6 +31,7 @@ export const EventCard = ({
   userPlan = 'Free',
   isLocked = false,
   type = 'normal',
+  dimmed = false,
   onToggle,
   onClick
 }: EventCardProps & { onToggle?: () => void }) => {
@@ -137,6 +139,7 @@ export const EventCard = ({
         bg-logo-container p-5 rounded-[30px] flex-row items-center gap-5 border
         ${isProtected ? 'border-white/20' : 'border-white/5'}
         ${isLocked ? 'opacity-30' : 'active:opacity-90'}
+        ${dimmed ? 'opacity-50' : ''}
       `}
     >
       {/* Icon or Checkbox */}
@@ -187,13 +190,14 @@ export const EventCard = ({
               <Text variant="caption" weight="semibold" className={getStatusColorClass()}>
                 {item.status === 'missed_protected' ? `Escalated to ${item.guardianSettings?.contact || 'Guardian'}` :
                   isCompleted ? 'Completed' :
-                    isHardDeadline ? 'Commitment' :
-                      showUrgency && isRisk && item.risk ? `${item.risk} Risk` :
-                        (item.time || 'Today')}
+                    dimmed ? 'Passed' :
+                      isHardDeadline ? 'Commitment' :
+                        showUrgency && isRisk && item.risk ? `${item.risk} Risk` :
+                          (item.time || 'Today')}
               </Text>
 
               {/* Days Left Logic */}
-              {isHardDeadline && !isHardDeadlineMissed && !isCompleted && (() => {
+              {isHardDeadline && !isHardDeadlineMissed && !isCompleted && !dimmed && (() => {
                 const daysLeft = Math.ceil((new Date(item.date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                 return (
                   <View className="flex-row items-center gap-1.5">

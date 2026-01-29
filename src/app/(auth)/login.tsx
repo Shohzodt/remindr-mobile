@@ -98,13 +98,13 @@ export default function LoginScreen() {
           {/* Logo Section */}
           <View className="flex-1 items-center justify-center mb-12">
             <RemindrLogo size={160} style={{ marginBottom: 24 }} />
-            <Text className="text-5xl font-extrabold text-text-primary tracking-tighter mb-3 mt-6">
+            <Text className="text-xlarge font-extrabold text-text-primary tracking-tighter mb-3 mt-6">
               Remind
               <Text className="text-accent-fuchsia">r</Text>
             </Text>
             <Text className="text-lg text-text-secondary mb-2 font-medium">Manage what matters.</Text>
             <Text className="text-xs text-text-secondary text-center leading-5">
-              Smart reminders for deadlines, contracts, and{'\n'}important life events.
+              Smart reminders, AI-powered contract analysis, and{'\n'} important life events — all in one.
             </Text>
           </View>
 

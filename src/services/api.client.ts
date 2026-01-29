@@ -38,7 +38,9 @@ apiClient.interceptors.response.use(
                 if (!refreshToken) {
                     // No refresh token means we are fully logged out.
                     // Clear storage just in case and reject.
+                    const { authEvents } = await import('./auth.events'); // Import authEvents
                     await TokenStorage.clearTokens();
+                    authEvents.triggerLogout(); // Trigger logout
                     return Promise.reject(error);
                 }
 

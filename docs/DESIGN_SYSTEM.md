@@ -71,7 +71,7 @@ export const Colors = {
 ### Font Sizes (Common)
 | Tailwind Class | Size (px/rem) | Usage                          |
 |----------------|---------------|--------------------------------|
-| `text-5xl`     | 48px          | Hero headline (Login)          |
+| `xlarge`     | 48px          | Hero headline (Login)          |
 | `text-4xl`     | 36px          | Page titles (Timeline)         |
 | `text-3xl`     | 30px          | Section headers                |
 | `text-xl`      | 20px          | Sub-section titles (Up Next)   |

@@ -21,10 +21,10 @@ module.exports = {
       base: ["16px", { lineHeight: "24px" }],
       lg: ["18px", { lineHeight: "26px" }],
       xl: ["20px", { lineHeight: "28px" }],
-      "2xl": ["24px", { lineHeight: "32px" }],
+      "two-xl": ["24px", { lineHeight: "32px" }],
       "slarge": ["30px", { lineHeight: "38px" }],
       "large": ["36px", { lineHeight: "44px" }],
-      "5xl": ["48px", { lineHeight: "56px" }],
+      "xlarge": ["48px", { lineHeight: "56px" }],
       "6xl": ["60px", { lineHeight: "68px" }],
     },
     // Override default lineHeight (for manual leading-* usage)

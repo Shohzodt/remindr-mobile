@@ -30,9 +30,9 @@ export const Text = ({
 
   const activeWeight = weight || defaultWeights[variant] || 'normal';
   const variants = {
-    hero: 'text-5xl tracking-tighter leading-none',
-    h1: 'text-4xl tracking-tighter',
-    h2: 'text-3xl tracking-tight',
+    hero: 'text-text-xlarge tracking-tighter leading-none',
+    h1: 'text-large tracking-tighter',
+    h2: 'text-slarge tracking-tight',
     h3: 'text-xl tracking-tight',
     body: 'text-base',
     caption: 'text-xs',

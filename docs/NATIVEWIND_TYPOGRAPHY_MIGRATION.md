@@ -27,7 +27,7 @@ The `fontSize` utility now automatically sets the correct line-height for you.
 | 2xl | 24px | 32px | `text-2xl` |
 | 3xl | 30px | 38px | `text-3xl` |
 | 4xl | 36px | 44px | `text-4xl` |
-| 5xl | 48px | 56px | `text-5xl` |
+| 5xl | 48px | 56px | `xlarge` |
 | 6xl | 60px | 68px | `text-6xl` |
 
 ## 2. Migration Examples

@@ -75,7 +75,7 @@ export default function SettingsScreen() {
                   resizeMode="cover"
                 />
               ) : (
-                <Text className="text-5xl text-white font-sans-medium mt-1">
+                <Text className="text-xlarge text-white font-sans-medium mt-1">
                   {user?.displayName?.[0]?.toUpperCase() || 'S'}
                 </Text>
               )}
