@@ -85,6 +85,14 @@ function RootLayoutNav() {
         />
 
         <Stack.Screen
+          name="reminders/index"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+
+        <Stack.Screen
           name="reminders/[id]"
           options={{
             presentation: 'modal',

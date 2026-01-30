@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { Text } from "@/components/ui/Text";
 import { ReminderRow } from "@/components/ReminderRow";
 import { EmptyState } from "@/components/EmptyState";
-import { useRemindersMock } from "@/hooks/useRemindersMock";
+import { useReminders } from "@/hooks/useReminders";
 import { ReminderCategory } from "@/types";
 import { Search, ArrowLeft, Filter, ChevronDown } from "lucide-react-native";
 import { Layout } from "@/constants/layout";
@@ -22,9 +22,18 @@ export default function RemindersScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  // In a real app, this would fetch *all* reminders, not just today's
-  const { reminders } = useRemindersMock(new Date().toISOString().split('T')[0]);
+  const { reminders, isLoading, refetch, toggleReminder } = useReminders();
+
+  const handleToggle = async (id: string, newStatus: string) => {
+    setTogglingId(id);
+    try {
+      await toggleReminder(id, newStatus);
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   // Filter Logic
   const filteredReminders = reminders.filter(item => {
@@ -45,6 +54,20 @@ export default function RemindersScreen() {
     const filterDef = FILTERS.find(f => f.id === activeFilter);
     return filterDef?.category ? item.category === filterDef.category : true;
   });
+
+  // Grouping Logic
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+
+  const overdue = filteredReminders.filter(r => r.date < todayStr && r.status !== 'completed');
+  const today = filteredReminders.filter(r => r.date === todayStr);
+  const upcoming = filteredReminders.filter(r => r.date > todayStr);
+
+  const sections = [
+    { title: 'Overdue', data: overdue },
+    { title: 'Today', data: today },
+    { title: 'Upcoming', data: upcoming }
+  ].filter(s => s.data.length > 0);
 
   return (
     <View className="flex-1 bg-bg-primary">
@@ -90,50 +113,38 @@ export default function RemindersScreen() {
         </View>
 
         {/* Grouped List (SectionList) */}
-        {/* Helper to group data */}
-        {(() => {
-          // Simple grouping for mock: "Today" vs "Upcoming"
-          // In real app, real date logic needed
-          const today = filteredReminders.filter(r => r.date === new Date().toISOString().split('T')[0]);
-          const upcoming = filteredReminders.filter(r => r.date !== new Date().toISOString().split('T')[0]);
-
-          const sections = [
-            { title: `TODAY (${today.length})`, data: today },
-            { title: `UPCOMING (${upcoming.length})`, data: upcoming }
-          ].filter(s => s.data.length > 0);
-
-          return (
-            <SectionList
-              sections={sections}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{ ...Layout.tabBarAwareContent, paddingHorizontal: 24 }}
-              stickySectionHeadersEnabled={false}
-              renderSectionHeader={({ section: { title } }) => (
-                <View className="flex-row items-center gap-2 mb-4 mt-2">
-                  <ChevronDown size={16} color="#71717a" />
-                  <Text variant="micro" className="text-text-muted text-[11px]">{title}</Text>
-                  <View className="h-[1px] flex-1 bg-white/5 ml-2" />
-                </View>
-              )}
-              renderItem={({ item }) => (
-                <ReminderRow
-                  item={item}
-                  onToggle={() => { }}
-                  onDelete={() => { }}
-                />
-              )}
-              ListEmptyComponent={
-                <View className="mt-10">
-                  <EmptyState
-                    message="No matches found"
-                    subtext={searchQuery ? `No results for "${searchQuery}"` : "You have no reminders in this category."}
-                    icon={<Filter size={32} color="#52525b" />}
-                  />
-                </View>
-              }
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ ...Layout.tabBarAwareContent, paddingHorizontal: 24 }}
+          stickySectionHeadersEnabled={false}
+          onRefresh={refetch}
+          refreshing={isLoading}
+          renderSectionHeader={({ section: { title } }) => (
+            <View className="flex-row items-center gap-2 mb-4 mt-2">
+              <ChevronDown size={16} color="#71717a" />
+              <Text variant="micro" className="text-text-muted text-[11px]">{title}</Text>
+              <View className="h-[1px] flex-1 bg-white/5 ml-2" />
+            </View>
+          )}
+          renderItem={({ item }) => (
+            <ReminderRow
+              item={item}
+              onToggle={() => handleToggle(item.id, item.status === 'completed' ? 'active' : 'completed')}
+              onDelete={() => { }}
+              isLoading={togglingId === item.id}
             />
-          );
-        })()}
+          )}
+          ListEmptyComponent={
+            <View className="mt-10">
+              <EmptyState
+                message="No matches found"
+                subtext={searchQuery ? `No results for "${searchQuery}"` : "You have no reminders in this category."}
+                icon={<Filter size={32} color="#52525b" />}
+              />
+            </View>
+          }
+        />
       </SafeAreaView>
     </View>
   );

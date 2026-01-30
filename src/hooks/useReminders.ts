@@ -107,7 +107,7 @@ export function useReminders() {
         error: (fetchError as any)?.message || (createMutation.error as any)?.response?.data?.message || (deleteMutation.error as any)?.response?.data?.message || null,
         createReminder,
         deleteReminder,
-        toggleReminder: (id: string, status: string) => updateMutation.mutate({ id, data: { status } }),
+        toggleReminder: (id: string, status: string) => updateMutation.mutateAsync({ id, data: { status } }),
         refetch
     };
 };

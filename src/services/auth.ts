@@ -20,8 +20,18 @@ export const AuthService = {
     /**
      * Login with Telegram Payload.
      */
-    async loginWithTelegram(data: { code: string; refreshToken?: string }): Promise<AuthResponse> {
-        return TelegramAuthService.completeAuth(data.code, data.refreshToken);
+    async loginWithTelegram(data: { code?: string; refreshToken?: string; initData?: string }): Promise<AuthResponse> {
+        if (data.initData) {
+            // New Flow: Exchange initData for tokens
+            const response = await apiClient.post<AuthResponse>('/auth/telegram', { initData: data.initData });
+            const { accessToken, refreshToken } = response.data;
+            await TokenStorage.setTokens(accessToken, refreshToken);
+            return response.data;
+        } else if (data.code) {
+            // Old Flow: Deep link with direct token
+            return TelegramAuthService.completeAuth(data.code, data.refreshToken);
+        }
+        throw new Error('Invalid Telegram login data');
     },
 
     /**

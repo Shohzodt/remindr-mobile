@@ -31,11 +31,19 @@ export const useTelegramAuth = () => {
             try {
                 setIsLoading(true);
                 // 4. Verify & Login
+                // 4. Verify & Login
                 // Pass tokens to existing context action
-                if (typeof token === 'string') {
+                if ('initData' in token && token.initData) {
+                    await loginWithTelegram({ initData: token.initData });
+                } else if ('accessToken' in token && typeof token.accessToken === 'string') {
+                    // Old flow: direct token
+                    await loginWithTelegram({
+                        code: token.accessToken || undefined, // Type guard fallback
+                        refreshToken: token.refreshToken || undefined
+                    });
+                } else if (typeof token === 'string') {
+                    // Legacy, shouldn't happen with updated parser but good for safety
                     await loginWithTelegram({ code: token });
-                } else {
-                    await loginWithTelegram({ code: token.accessToken, refreshToken: token.refreshToken || undefined });
                 }
             } catch (error) {
                 console.error('Deep link login failed:', error);
