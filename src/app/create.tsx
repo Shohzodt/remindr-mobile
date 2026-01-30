@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useReminders } from '@/hooks/useReminders';
+import { LocationInput } from '@/components/LocationInput';
 import { Alert, ActivityIndicator } from 'react-native';
 import { ReminderStatus, ReminderSource, ReminderPriority } from '@/types';
 
@@ -298,12 +299,8 @@ export default function CreateReminderScreen() {
                                 {/* Location */}
                                 <View className="mb-6">
                                     <Text className="text-[#52525c] mb-2.5 px-1 text-xs font-sans-extrabold tracking-widest uppercase">LOCATION</Text>
-                                    <View className="bg-[#151518] border border-white/10 rounded-2xl flex-row items-center px-4 py-4 gap-3">
-                                        <MapPin size={18} color="#71717a" />
-                                        <TextInput
-                                            selectionColor={Theme.colors.accentPurple}
-                                            placeholder="Where is it?"
-                                            className="flex-1 text-white font-sans-medium text-md"
+                                    <View className="bg-[#151518] rounded-2xl">
+                                        <LocationInput
                                             value={location}
                                             onChangeText={setLocation}
                                         />

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 import { RemindrLogo } from '@/components/ui/RemindrLogo';
 import { Theme } from '@/theme';
@@ -121,12 +121,22 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="flex-row items-center justify-center h-16 rounded-3xl w-full bg-[#2AABEE] active:opacity-80"
+              className={`flex-row items-center justify-center h-16 rounded-3xl w-full bg-[#2AABEE] ${isTelegramLoading ? 'opacity-80' : 'active:opacity-80'}`}
               onPress={handleTelegramLogin}
+              disabled={isTelegramLoading}
               activeOpacity={0.8}
             >
-              <FontAwesome name="telegram" size={24} color="white" style={{ marginRight: 12 }} />
-              <Text className="text-base font-bold text-white">Continue with Telegram</Text>
+              {isTelegramLoading ? (
+                <View className="flex-row items-center gap-3">
+                  <ActivityIndicator color="white" />
+                  <Text className="text-base font-bold text-white">Opening Telegram...</Text>
+                </View>
+              ) : (
+                <>
+                  <FontAwesome name="telegram" size={24} color="white" style={{ marginRight: 12 }} />
+                  <Text className="text-base font-bold text-white">Continue with Telegram</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
 

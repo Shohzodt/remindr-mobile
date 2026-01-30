@@ -17,6 +17,22 @@ apiClient.interceptors.request.use(async (config) => {
     return config;
 });
 
+// Refresh state
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+
+    failedQueue = [];
+};
+
 apiClient.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -28,7 +44,19 @@ apiClient.interceptors.response.use(
                 return Promise.reject(error);
             }
 
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                }).then(token => {
+                    originalRequest.headers['Authorization'] = `Bearer ${token}`;
+                    return apiClient(originalRequest);
+                }).catch(err => {
+                    return Promise.reject(err);
+                });
+            }
+
             originalRequest._retry = true;
+            isRefreshing = true;
 
             try {
                 // Dynamically import storage to ensure no circular deps or early execution issues
@@ -37,10 +65,9 @@ apiClient.interceptors.response.use(
 
                 if (!refreshToken) {
                     // No refresh token means we are fully logged out.
-                    // Clear storage just in case and reject.
-                    const { authEvents } = await import('./auth.events'); // Import authEvents
+                    const { authEvents } = await import('./auth.events');
                     await TokenStorage.clearTokens();
-                    authEvents.triggerLogout(); // Trigger logout
+                    authEvents.triggerLogout();
                     return Promise.reject(error);
                 }
 
@@ -51,16 +78,23 @@ apiClient.interceptors.response.use(
 
                 const { accessToken, refreshToken: newRefreshToken } = response.data;
 
-                // Update storage
-                await TokenStorage.setTokens(accessToken, newRefreshToken);
+                // Update storage - if backend doesn't return a new refresh token, keep the old one
+                // Note: With rotation, backend SHOULD return a new one.
+                await TokenStorage.setTokens(accessToken, newRefreshToken || refreshToken);
 
-                // Update defaults and original request
+                // Update defaults
                 apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-                originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
 
+                // Process queue
+                processQueue(null, accessToken);
+
+                // Retry original request
+                originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
                 return apiClient(originalRequest);
             } catch (refreshError) {
-                // Refresh failed - clear tokens so app can logout cleanly
+                // Refresh failed
+                processQueue(refreshError, null);
+
                 const { TokenStorage } = await import('./storage');
                 const { authEvents } = await import('./auth.events');
 
@@ -68,6 +102,8 @@ apiClient.interceptors.response.use(
                 authEvents.triggerLogout();
 
                 return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
             }
         }
         return Promise.reject(error);

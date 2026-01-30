@@ -57,7 +57,10 @@ export default function RemindersScreen() {
 
   // Grouping Logic
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${day}`;
 
   const overdue = filteredReminders.filter(r => r.date < todayStr && r.status !== 'completed');
   const today = filteredReminders.filter(r => r.date === todayStr);
@@ -84,7 +87,10 @@ export default function RemindersScreen() {
             <Text variant="h2" weight="extrabold" className="text-white">All Reminders</Text>
           </View>
 
-          <TouchableOpacity className="bg-white px-4 py-2 rounded-full active:opacity-90">
+          <TouchableOpacity
+            onPress={() => router.push('/create')}
+            className="bg-white px-4 py-2 rounded-full active:opacity-90"
+          >
             <Text weight="bold" className="text-black">+ Create</Text>
           </TouchableOpacity>
         </View>
@@ -133,6 +139,7 @@ export default function RemindersScreen() {
               onToggle={() => handleToggle(item.id, item.status === 'completed' ? 'active' : 'completed')}
               onDelete={() => { }}
               isLoading={togglingId === item.id}
+              onPress={() => router.push(`/reminders/${item.id}`)}
             />
           )}
           ListEmptyComponent={

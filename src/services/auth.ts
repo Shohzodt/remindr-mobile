@@ -56,7 +56,7 @@ export const AuthService = {
             );
 
             const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
-            await TokenStorage.setTokens(newAccessToken, newRefreshToken);
+            await TokenStorage.setTokens(newAccessToken, newRefreshToken || refreshToken);
 
             return newAccessToken;
         } catch (error) {

@@ -1,13 +1,14 @@
-import React from 'react';
-import { View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Share } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Share, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Text } from '@/components/ui/Text';
 import { Theme } from '@/theme';
 import { useReminder, useReminders } from '@/hooks/useReminders';
-import { Clock, MapPin, CheckCircle, Trash2, FileText, Share2 } from 'lucide-react-native';
+import { Clock, MapPin, CheckCircle, Trash2, FileText, Share2, Video, ExternalLink } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format } from 'date-fns';
+import { parseLocation, PROVIDER_CONFIG } from '@/utils/locationParser';
 
 export default function ReminderDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -153,11 +154,41 @@ export default function ReminderDetailsScreen() {
                             <View className="w-14 h-14 rounded-3xl bg-zinc-900 border border-white/5 items-center justify-center shrink-0">
                                 <MapPin size={24} color="#a1a1aa" />
                             </View>
-                            <View className="pt-1">
+                            <View className="pt-1 flex-1">
                                 <Text className="text-zinc-500 text-xs font-sans-bold uppercase tracking-[1px] mb-1.5">LOCATION</Text>
-                                <Text className="text-white text-xl font-sans-bold">
-                                    {reminder.location || 'No location set'}
-                                </Text>
+                                <View className="flex-row items-center flex-wrap gap-2">
+                                    <Text className="text-white text-xl font-sans-bold mr-2">
+                                        {reminder.location || 'No location set'}
+                                    </Text>
+
+                                    {(() => {
+                                        const parsed = parseLocation(reminder.location || '');
+                                        if (parsed.type === 'meeting' && parsed.provider && parsed.url) {
+                                            const config = PROVIDER_CONFIG[parsed.provider];
+                                            return (
+                                                <TouchableOpacity
+                                                    onPress={() => Linking.openURL(parsed.url!)}
+                                                    className="flex-row items-center px-2.5 py-1.5 rounded-lg border"
+                                                    style={{
+                                                        backgroundColor: config.bg,
+                                                        borderColor: config.color,
+                                                    }}
+                                                >
+                                                    <Video size={12} color={config.color} style={{ marginRight: 6 }} />
+                                                    <Text
+                                                        className="text-xs font-sans-bold"
+                                                        style={{ color: config.color }}
+                                                    >
+                                                        {config.label}
+                                                    </Text>
+                                                    <View className="w-[1px] h-3 mx-2 bg-white/20" />
+                                                    <ExternalLink size={10} color={config.color} />
+                                                </TouchableOpacity>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
+                                </View>
                             </View>
                         </View>
 
