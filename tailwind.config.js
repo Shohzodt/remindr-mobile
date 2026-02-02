@@ -90,6 +90,7 @@ module.exports = {
         "bg-secondary": "#0f172a",
         "bg-surface": "#1e293b",
         "logo-container": "#0B0B0F",
+        "card": "#121217",
 
         // Accents
         "accent-purple": "#8B5CF6",

@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator, Image } from 'react-native';
 import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
-import { RemindrLogo } from '@/components/ui/RemindrLogo';
 import { Theme } from '@/theme';
 import { useAuth } from '@/context/AuthContext';
 import { AntDesign, FontAwesome } from '@expo/vector-icons';
@@ -96,8 +95,26 @@ export default function LoginScreen() {
       <SafeAreaView className="flex-1">
         <View className="flex-1 px-8 pt-20 pb-12 justify-between">
           {/* Logo Section */}
-          <View className="flex-1 items-center justify-center mb-12">
-            <RemindrLogo size={160} style={{ marginBottom: 24 }} />
+          <View className="flex-1 items-center justify-center mb-12" style={{ overflow: 'visible' }}>
+            <View
+              style={{
+                backgroundColor: '#0B0B0F',
+                borderRadius: 32,
+                marginBottom: 24,
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 0.05)',
+              }}
+            >
+              <Image
+                source={require('../../../assets/icon.png')}
+                style={{
+                  width: 160,
+                  height: 160,
+                  borderRadius: 32,
+                }}
+                resizeMode="cover"
+              />
+            </View>
             <Text className="text-xlarge font-extrabold text-text-primary tracking-tighter mb-3 mt-6">
               Remind
               <Text className="text-accent-fuchsia">r</Text>

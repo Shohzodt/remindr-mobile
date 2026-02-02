@@ -136,7 +136,7 @@ export const EventCard = ({
     <Pressable
       onPress={!isLocked ? onClick : undefined}
       className={`
-        bg-logo-container p-5 rounded-[30px] flex-row items-center gap-5 border
+        bg-card p-5 rounded-[30px] flex-row items-center gap-5 border
         ${isProtected ? 'border-white/20' : 'border-white/5'}
         ${isLocked ? 'opacity-30' : 'active:opacity-90'}
         ${dimmed ? 'opacity-50' : ''}
