@@ -42,7 +42,7 @@ function RootLayoutNav() {
 
     if (!isAuthenticated && !inAuthGroup) {
       // Redirect to the login page if not authenticated
-      router.replace('/(auth)/login');
+      router.replace('/login');
     } else if (isAuthenticated && inAuthGroup) {
       // Redirect back to the home page if authenticated
       router.replace('/');

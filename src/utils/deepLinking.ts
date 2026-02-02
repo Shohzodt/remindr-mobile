@@ -18,14 +18,14 @@ export const parseTelegramAuthCode = (url: string): { accessToken: string | null
     try {
         const parsed = Linking.parse(url);
 
-        // Strategy 1: Check for 'login' path with 'token' (Preferred)
-        if (parsed.path === 'login') {
+        // Strategy 1: Check for 'login' or 'telegram-auth' path
+        if (parsed.path === 'login' || parsed.path === 'telegram-auth') {
             const initData = getFirstParam(parsed.queryParams?.initData);
             if (initData) {
                 return { initData };
             }
 
-            const accessToken = getFirstParam(parsed.queryParams?.token);
+            const accessToken = getFirstParam(parsed.queryParams?.token || parsed.queryParams?.accessToken);
             const refreshToken = getFirstParam(parsed.queryParams?.refreshToken);
 
             if (!accessToken) return null;
