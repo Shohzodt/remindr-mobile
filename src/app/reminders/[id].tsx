@@ -163,8 +163,9 @@ export default function ReminderDetailsScreen() {
 
                                     {(() => {
                                         const parsed = parseLocation(reminder.location || '');
-                                        if (parsed.type === 'meeting' && parsed.provider && parsed.url) {
+                                        if ((parsed.type === 'meeting' || parsed.type === 'location') && parsed.provider && parsed.url) {
                                             const config = PROVIDER_CONFIG[parsed.provider];
+                                            const IconComponent = config.icon === 'video' ? Video : MapPin;
                                             return (
                                                 <TouchableOpacity
                                                     onPress={() => Linking.openURL(parsed.url!)}
@@ -174,7 +175,7 @@ export default function ReminderDetailsScreen() {
                                                         borderColor: config.color,
                                                     }}
                                                 >
-                                                    <Video size={12} color={config.color} style={{ marginRight: 6 }} />
+                                                    <IconComponent size={12} color={config.color} style={{ marginRight: 6 }} />
                                                     <Text
                                                         className="text-xs font-sans-bold"
                                                         style={{ color: config.color }}

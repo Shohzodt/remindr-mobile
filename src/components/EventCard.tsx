@@ -32,9 +32,8 @@ export const EventCard = ({
   isLocked = false,
   type = 'normal',
   dimmed = false,
-  onToggle,
   onClick
-}: EventCardProps & { onToggle?: () => void }) => {
+}: EventCardProps) => {
   const isPremium = userPlan === 'Premium';
 
   // For mobile, we might want to simplify logic or keep it 1:1. Keeping 1:1 for fidelity.
@@ -142,14 +141,12 @@ export const EventCard = ({
         ${dimmed ? 'opacity-50' : ''}
       `}
     >
-      {/* Icon or Checkbox */}
-      <Pressable
-        onPress={onToggle}
-        disabled={isLocked || !onToggle}
+      {/* Icon */}
+      <View
         className={`w-[52px] h-[52px] rounded-2xl items-center justify-center shrink-0 ${config.classes}`}
       >
         {config.icon}
-      </Pressable>
+      </View>
 
       <View className="flex-1 min-w-0">
         <View className="flex-row items-center justify-between mb-1">
@@ -235,7 +232,7 @@ export const EventCard = ({
         )}
       </View>
 
-      {!isLocked && !onToggle && (
+      {!isLocked && (
         <ChevronRight size={20} color="#27272a" /> // zinc-800
       )}
     </Pressable>

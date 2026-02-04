@@ -221,7 +221,6 @@ export default function TimelineScreen() {
                       item={item}
                       userPlan={userPlan}
                       onClick={() => router.push(`/reminders/${item.id}`)}
-                      onToggle={() => toggleReminder(item.id, item.status === 'completed' ? 'active' : 'completed')}
                     />
                   ))
                 ) : (
@@ -246,9 +245,8 @@ export default function TimelineScreen() {
                       key={item.id}
                       item={item}
                       userPlan={userPlan}
-                      dimmed={true} // Add visual indication it's past
+                      dimmed={true}
                       onClick={() => router.push(`/reminders/${item.id}`)}
-                      onToggle={() => toggleReminder(item.id, item.status === 'completed' ? 'active' : 'completed')}
                     />
                   ))
                 ) : (
