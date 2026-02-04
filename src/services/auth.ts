@@ -5,10 +5,18 @@ import { User, AuthResponse } from '@/types';
 
 export const AuthService = {
     /**
-     * Login with Google ID Token.
+     * Request OTP for email login.
      */
-    async loginWithGoogle(idToken: string): Promise<AuthResponse> {
-        const response = await apiClient.post<AuthResponse>('/auth/google', { token: idToken });
+    async requestOtp(email: string): Promise<void> {
+        await apiClient.post('/auth/otp/request', { email });
+    },
+
+    /**
+     * Verify OTP and login.
+     * @param type - 'email' for email OTP, 'telegram' for Telegram code
+     */
+    async verifyOtp(email: string, otp: string, type: 'email' | 'telegram' = 'email'): Promise<AuthResponse> {
+        const response = await apiClient.post<AuthResponse>('/auth/otp/verify', { email, otp, type });
         const { accessToken, refreshToken } = response.data;
         await TokenStorage.setTokens(accessToken, refreshToken);
         return response.data;

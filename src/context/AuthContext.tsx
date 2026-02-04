@@ -9,7 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   isLoading: boolean;
-  loginWithGoogle: (idToken: string) => Promise<void>;
+  loginWithOtp: (email: string, otp: string) => Promise<void>;
   loginWithTelegram: (data: any) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   user: null,
   isLoading: true,
-  loginWithGoogle: async () => { },
+  loginWithOtp: async () => { },
   loginWithTelegram: async () => { },
   logout: async () => { },
 });
@@ -67,17 +67,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const loginWithGoogle = async (idToken: string) => {
+  const loginWithOtp = async (email: string, otp: string) => {
     try {
       setIsLoading(true);
-      const response = await AuthService.loginWithGoogle(idToken); // Sets tokens internally
+      const response = await AuthService.verifyOtp(email, otp);
+      console.log(response);
 
       // Fetch fresh profile
       const userProfile = await AuthService.getProfile();
       setUser(userProfile);
       setIsAuthenticated(true);
+      console.log(userProfile)
     } catch (error) {
-      console.error('Google login failed', error);
+      console.error('OTP login failed', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -116,7 +118,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated,
         user,
         isLoading,
-        loginWithGoogle,
+        loginWithOtp,
         loginWithTelegram,
         logout,
       }}
