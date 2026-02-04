@@ -16,10 +16,15 @@ export const AuthService = {
      * @param type - 'email' for email OTP, 'telegram' for Telegram code
      */
     async verifyOtp(email: string, otp: string, type: 'email' | 'telegram' = 'email'): Promise<AuthResponse> {
-        const response = await apiClient.post<AuthResponse>('/auth/otp/verify', { email, otp, type });
-        const { accessToken, refreshToken } = response.data;
-        await TokenStorage.setTokens(accessToken, refreshToken);
-        return response.data;
+        try {
+            const response = await apiClient.post<AuthResponse>('/auth/otp/verify', { email, code: otp, type });
+            const { accessToken, refreshToken } = response.data;
+            await TokenStorage.setTokens(accessToken, refreshToken);
+            return response.data;
+        } catch (error: any) {
+            console.error('OTP verification failed:', error.response?.data || error.message);
+            throw error;
+        }
     },
 
     /**
@@ -74,11 +79,13 @@ export const AuthService = {
         }
     },
 
-    /**
-     * Logout the user.
-     */
     async logout(): Promise<void> {
+        try {
+            await apiClient.post('/auth/logout');
+        } catch (error: any) {
+            // Ignore logout API errors - we still want to clear local tokens
+            console.warn('Logout API failed (session may already be invalid):', error.response?.status);
+        }
         await TokenStorage.clearTokens();
-        // Optional: Call sending backend to invalidate token if needed
     },
 };

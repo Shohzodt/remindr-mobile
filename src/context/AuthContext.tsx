@@ -70,8 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const loginWithOtp = async (email: string, otp: string) => {
     try {
       setIsLoading(true);
-      const response = await AuthService.verifyOtp(email, otp);
-      console.log(response);
+      await AuthService.verifyOtp(email, otp);
 
       // Fetch fresh profile
       const userProfile = await AuthService.getProfile();
