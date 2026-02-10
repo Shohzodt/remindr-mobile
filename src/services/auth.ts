@@ -1,7 +1,6 @@
 import { apiClient } from './api.client';
 import { TokenStorage } from './storage';
-import { TelegramAuthService } from './telegramAuth.service';
-import { User, AuthResponse } from '@/types';
+import { User, AuthResponse, UpdateProfilePayload, LinkEmailPayload, LinkTelegramPayload } from '@/types';
 
 export const AuthService = {
     /**
@@ -12,45 +11,35 @@ export const AuthService = {
     },
 
     /**
-     * Verify OTP and login.
-     * @param type - 'email' for email OTP, 'telegram' for Telegram code
+     * Login with OTP code (works for both Email and Telegram).
+     * User receives 6-digit code via email or Telegram bot.
      */
-    async verifyOtp(email: string, otp: string, type: 'email' | 'telegram' = 'email'): Promise<AuthResponse> {
+    async login(email: string | null, code: string): Promise<AuthResponse> {
         try {
-            const response = await apiClient.post<AuthResponse>('/auth/otp/verify', { email, code: otp, type });
+            const response = await apiClient.post<AuthResponse>('/auth/login', { email, code });
             const { accessToken, refreshToken } = response.data;
             await TokenStorage.setTokens(accessToken, refreshToken);
             return response.data;
         } catch (error: any) {
-            console.error('OTP verification failed:', error.response?.data || error.message);
+            console.error('Login failed:', error.response?.data || error.message);
             throw error;
         }
-    },
-
-    /**
-     * Login with Telegram Payload.
-     */
-    /**
-     * Login with Telegram Payload.
-     */
-    async loginWithTelegram(data: { code?: string; refreshToken?: string; initData?: string }): Promise<AuthResponse> {
-        if (data.initData) {
-            // New Flow: Exchange initData for tokens
-            const response = await apiClient.post<AuthResponse>('/auth/telegram', { initData: data.initData });
-            const { accessToken, refreshToken } = response.data;
-            await TokenStorage.setTokens(accessToken, refreshToken);
-            return response.data;
-        } else if (data.code) {
-            // Old Flow: Deep link with direct token
-            return TelegramAuthService.completeAuth(data.code, data.refreshToken);
-        }
-        throw new Error('Invalid Telegram login data');
     },
 
     /**
      * Get current user profile.
      */
     async getProfile(): Promise<User> {
+        const response = await apiClient.get<User>('/auth/me');
+        return response.data;
+    },
+
+    /**
+     * Update user profile.
+     */
+    async updateProfile(payload: UpdateProfilePayload): Promise<User> {
+        await apiClient.put('/auth/me', payload);
+        // Fetch fresh profile after update
         const response = await apiClient.get<User>('/auth/me');
         return response.data;
     },
@@ -85,6 +74,32 @@ export const AuthService = {
         } catch (error: any) {
             // Ignore logout API errors - we still want to clear local tokens
             console.warn('Logout API failed (session may already be invalid):', error.response?.status);
+        }
+        await TokenStorage.clearTokens();
+    },
+
+    /**
+     * Link an email account to the current user.
+     */
+    async linkEmail(payload: LinkEmailPayload): Promise<void> {
+        await apiClient.post('/auth/link/email', payload);
+    },
+
+    /**
+     * Link a Telegram account to the current user.
+     */
+    async linkTelegram(payload: LinkTelegramPayload): Promise<void> {
+        await apiClient.post('/auth/link/telegram', payload);
+    },
+
+    /**
+     * Log out from all devices/sessions.
+     */
+    async logoutAll(): Promise<void> {
+        try {
+            await apiClient.post('/auth/logout-all');
+        } catch (error: any) {
+            console.warn('Logout all failed:', error.response?.status);
         }
         await TokenStorage.clearTokens();
     },

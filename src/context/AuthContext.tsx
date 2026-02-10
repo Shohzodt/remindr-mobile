@@ -9,18 +9,18 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   isLoading: boolean;
-  loginWithOtp: (email: string, otp: string) => Promise<void>;
-  loginWithTelegram: (data: any) => Promise<void>;
+  login: (email: string | null, code: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   user: null,
   isLoading: true,
-  loginWithOtp: async () => { },
-  loginWithTelegram: async () => { },
+  login: async () => { },
   logout: async () => { },
+  refreshUser: async () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -37,6 +37,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (token) {
           // Validate token and get user profile
           const userProfile = await AuthService.getProfile();
+          if (!userProfile || !userProfile.id) {
+            console.error('Invalid user profile received:', userProfile);
+            throw new Error('Invalid user profile');
+          }
           setUser(userProfile);
           setIsAuthenticated(true);
         }
@@ -67,36 +71,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const loginWithOtp = async (email: string, otp: string) => {
+  const login = async (email: string | null, code: string) => {
     try {
       setIsLoading(true);
-      await AuthService.verifyOtp(email, otp);
-
-      // Fetch fresh profile
-      const userProfile = await AuthService.getProfile();
-      setUser(userProfile);
-      setIsAuthenticated(true);
-      console.log(userProfile)
-    } catch (error) {
-      console.error('OTP login failed', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loginWithTelegram = async (data: any) => {
-    try {
-      setIsLoading(true);
-      const response = await AuthService.loginWithTelegram(data);
-      await TokenStorage.setTokens(response.accessToken, response.refreshToken);
+      await AuthService.login(email, code);
 
       // Fetch fresh profile
       const userProfile = await AuthService.getProfile();
       setUser(userProfile);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error('Telegram login failed', error);
+      console.error('Login failed', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -111,15 +96,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(false);
   };
 
+  const refreshUser = async () => {
+    try {
+      const userProfile = await AuthService.getProfile();
+      setUser(userProfile);
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
         isAuthenticated,
         user,
         isLoading,
-        loginWithOtp,
-        loginWithTelegram,
+        login,
         logout,
+        refreshUser,
       }}
     >
       {children}

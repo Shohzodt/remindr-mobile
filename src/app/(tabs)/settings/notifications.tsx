@@ -1,37 +1,31 @@
-import React, { useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import React from 'react';
+import { View, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated';
 
-import { Theme } from "@/theme";
 import { Layout } from "@/constants/layout";
 import { Text } from '@/components/ui/Text';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 
-// Custom Toggle Component to match Web Design specific look
-const CustomToggle = ({ active, onToggle }: { active: boolean, onToggle: () => void }) => {
-    // We can use a simple view animation or just conditional styling. 
-    // Web uses: w-12 h-6 rounded-full relative transition-colors duration-300 ${active ? 'bg-[#8B5CF6]' : 'bg-zinc-800'}
-    // Circle: absolute top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ${active ? 'translate-x-7' : 'translate-x-1'}
-
+// Custom Toggle Component (Disabled version)
+const CustomToggle = ({ active, disabled = false }: { active: boolean, disabled?: boolean }) => {
     return (
-        <TouchableOpacity
-            onPress={onToggle}
-            activeOpacity={0.8}
-            className={`w-12 h-6 rounded-full justify-center ${active ? 'bg-[#8B5CF6]' : 'bg-zinc-800'}`}
+        <View
+            className={`w-12 h-6 rounded-full justify-center ${active ? 'bg-[#8B5CF6]' : 'bg-zinc-800'} ${disabled ? 'opacity-40' : ''}`}
         >
             <View
                 className={`w-4 h-4 bg-white rounded-full absolute top-1 ${active ? 'right-1' : 'left-1'}`}
             />
-        </TouchableOpacity>
+        </View>
     );
 };
 
-// Row Component
-const SettingRow = ({ title, description, active, onToggle }: { title: string, description: string, active: boolean, onToggle: () => void }) => (
-    <View className="p-6 flex-row items-center justify-between">
+// Row Component (Disabled)
+const SettingRow = ({ title, description, active }: { title: string, description: string, active: boolean }) => (
+    <View className="p-6 flex-row items-center justify-between opacity-50">
         <View className="flex-1 pr-4">
             <Text variant="body" weight="bold" className="text-white text-sm mb-0.5 tracking-tight">
                 {title}
@@ -40,22 +34,14 @@ const SettingRow = ({ title, description, active, onToggle }: { title: string, d
                 {description}
             </Text>
         </View>
-        <CustomToggle active={active} onToggle={onToggle} />
+        <CustomToggle active={active} disabled />
     </View>
 );
 
 export default function NotificationsSettingsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
-
-    const [channels, setChannels] = useState({ push: true, email: false });
-    const [advanceAlert, setAdvanceAlert] = useState('15m');
-    const [critical, setCritical] = useState(true);
-    const [followUp, setFollowUp] = useState(false);
-    const [quietHours, setQuietHours] = useState(false);
-    const [sensory, setSensory] = useState({ sound: true, haptics: true });
-
-    const advanceOptions = ['None', '5m', '15m', '1h', '1d'];
+    const { advanceWarningMinutes, setAdvanceWarningMinutes, isLoading, isSaving, error, options } = useNotificationSettings();
 
     return (
         <View className="flex-1 bg-bg-primary">
@@ -81,159 +67,152 @@ export default function NotificationsSettingsScreen() {
                     <Text variant="h2" weight="extrabold" className="text-white tracking-tighter">
                         Notifications
                     </Text>
+                    {isSaving && <ActivityIndicator size="small" color="#8B5CF6" />}
                 </View>
 
-                <View className="gap-10">
-                    {/* Delivery Channels */}
-                    <View>
-                        <Text variant="micro" className="text-text-dim mb-4 pl-1 tracking-[0.2em] uppercase">
-                            Delivery Channels
-                        </Text>
-                        <View className="bg-[#121217] rounded-[32px] border border-white/5 overflow-hidden">
-                            <SettingRow
-                                title="Push Notifications"
-                                description="Real-time alerts on this device"
-                                active={channels.push}
-                                onToggle={() => setChannels(prev => ({ ...prev, push: !prev.push }))}
-                            />
-                            <View className="h-[1px] bg-white/5 mx-6" />
-                            <SettingRow
-                                title="Email Digests"
-                                description="Weekly schedule summaries"
-                                active={channels.email}
-                                onToggle={() => setChannels(prev => ({ ...prev, email: !prev.email }))}
-                            />
-                        </View>
-                    </View>
+                {isLoading ? (
+                    <LoadingSpinner message="Loading settings..." />
+                ) : (
+                    <View className="gap-10">
+                        {/* Error Message */}
+                        {error && (
+                            <View className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4">
+                                <Text className="text-red-400 text-sm text-center">{error}</Text>
+                            </View>
+                        )}
 
-                    {/* Timing Preferences */}
-                    <View>
-                        <Text variant="micro" className="text-text-dim mb-4 pl-1 tracking-[0.2em] uppercase">
-                            Timing Preferences
-                        </Text>
-                        <View className="bg-[#121217] rounded-[32px] border border-white/5 p-6 gap-8">
-                            {/* Advance Warning Pills */}
-                            <View>
-                                <Text variant="caption" weight="bold" className="text-zinc-400 mb-4">
-                                    Advance Warning
-                                </Text>
-                                <View className="flex-row gap-2">
-                                    {/* Horizontal Scroll if needed, but pills are small enough to wrap or fit */}
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
-                                        {advanceOptions.map(time => (
+                        {/* Delivery Channels (Disabled) */}
+                        <View className="opacity-50">
+                            <Text variant="micro" className="text-text-dim mb-4 pl-1 tracking-[0.2em] uppercase">
+                                Delivery Channels
+                            </Text>
+                            <View className="bg-[#121217] rounded-[32px] border border-white/5 overflow-hidden">
+                                <SettingRow
+                                    title="Push Notifications"
+                                    description="Real-time alerts on this device"
+                                    active={true}
+                                />
+                                <View className="h-[1px] bg-white/5 mx-6" />
+                                <SettingRow
+                                    title="Email Digests"
+                                    description="Weekly schedule summaries"
+                                    active={false}
+                                />
+                            </View>
+                        </View>
+
+                        {/* Timing Preferences */}
+                        <View>
+                            <Text variant="micro" className="text-text-dim mb-4 pl-1 tracking-[0.2em] uppercase">
+                                Timing Preferences
+                            </Text>
+                            <View className="bg-[#121217] rounded-[32px] border border-white/5 p-6 gap-8">
+                                {/* Advance Warning Pills - INTERACTIVE */}
+                                <View>
+                                    <Text variant="caption" weight="bold" className="text-zinc-400 mb-4">
+                                        Advance Warning
+                                    </Text>
+                                    <View className="flex-row gap-2 flex-wrap">
+                                        {options.map(option => (
                                             <TouchableOpacity
-                                                key={time}
-                                                onPress={() => setAdvanceAlert(time)}
-                                                className={`px-5 py-2.5 rounded-xl border mr-2 ${advanceAlert === time
+                                                key={option.value}
+                                                onPress={() => setAdvanceWarningMinutes(option.value)}
+                                                disabled={isSaving}
+                                                className={`px-5 py-2.5 rounded-xl border ${advanceWarningMinutes === option.value
                                                     ? 'bg-[#8B5CF6] border-transparent shadow-sm'
                                                     : 'bg-white/5 border-white/5'
-                                                    }`}
+                                                    } ${isSaving ? 'opacity-50' : ''}`}
                                             >
-                                                <Text variant="micro" weight="extrabold" className={`${advanceAlert === time ? 'text-white' : 'text-zinc-500'} tracking-widest`}>
-                                                    {time}
+                                                <Text variant="micro" weight="extrabold" className={`${advanceWarningMinutes === option.value ? 'text-white' : 'text-zinc-500'} tracking-widest`}>
+                                                    {option.label}
                                                 </Text>
                                             </TouchableOpacity>
                                         ))}
-                                    </ScrollView>
-                                </View>
-                            </View>
-
-                            <View className="flex-row items-center justify-between">
-                                <View className="flex-1 pr-4">
-                                    <Text variant="body" weight="bold" className="text-white text-sm mb-0.5 tracking-tight">Critical Reminders</Text>
-                                    <Text variant="micro" className="text-zinc-500 font-sans-medium text-[11px] capitalize lowercase" style={{ textTransform: 'none' }}>High-priority sound for deadlines</Text>
-                                </View>
-                                <CustomToggle active={critical} onToggle={() => setCritical(!critical)} />
-                            </View>
-
-                            <View className="flex-row items-center justify-between">
-                                <View className="flex-1 pr-4">
-                                    <Text variant="body" weight="bold" className="text-white text-sm mb-0.5 tracking-tight">Auto Follow-up</Text>
-                                    <Text variant="micro" className="text-zinc-500 font-sans-medium text-[11px] capitalize lowercase" style={{ textTransform: 'none' }}>Re-alert if not dismissed in 30m</Text>
-                                </View>
-                                <CustomToggle active={followUp} onToggle={() => setFollowUp(!followUp)} />
-                            </View>
-                        </View>
-                    </View>
-
-                    {/* Quiet Hours */}
-                    <View>
-                        <Text variant="micro" className="text-text-dim mb-4 pl-1 tracking-[0.2em] uppercase">
-                            Quiet Hours
-                        </Text>
-                        <View className="bg-[#121217] rounded-[32px] border border-white/5 p-6 gap-6">
-                            <View className="flex-row items-center justify-between">
-                                <View className="flex-1 pr-4">
-                                    <Text variant="body" weight="bold" className="text-white text-sm mb-0.5 tracking-tight">Enable Quiet Hours</Text>
-                                    <Text variant="micro" className="text-zinc-500 font-sans-medium text-[11px] capitalize lowercase" style={{ textTransform: 'none' }}>Mute non-critical notifications</Text>
-                                </View>
-                                <CustomToggle active={quietHours} onToggle={() => setQuietHours(!quietHours)} />
-                            </View>
-
-                            {quietHours && (
-                                <View className="pt-4 border-t border-white/5 flex-row gap-4">
-                                    <View className="flex-1">
-                                        <Text variant="micro" className="text-zinc-600 mb-2 tracking-widest">FROM</Text>
-                                        <View className="bg-white/5 p-3 rounded-xl border border-white/10 items-center">
-                                            <Text variant="body" weight="bold" className="text-white text-sm">22:00</Text>
-                                        </View>
-                                    </View>
-                                    <View className="flex-1">
-                                        <Text variant="micro" className="text-zinc-600 mb-2 tracking-widest">TO</Text>
-                                        <View className="bg-white/5 p-3 rounded-xl border border-white/10 items-center">
-                                            <Text variant="body" weight="bold" className="text-white text-sm">07:00</Text>
-                                        </View>
                                     </View>
                                 </View>
-                            )}
-                        </View>
-                    </View>
 
-                    {/* Sensory */}
-                    <View>
-                        <Text variant="micro" className="text-text-dim mb-4 pl-1 tracking-[0.2em] uppercase">
-                            Sensory
-                        </Text>
-                        <View className="bg-[#121217] rounded-[32px] border border-white/5 overflow-hidden">
-                            <SettingRow
-                                title="Alert Sound"
-                                description="Remindr signature chime"
-                                active={sensory.sound}
-                                onToggle={() => setSensory(prev => ({ ...prev, sound: !prev.sound }))}
-                            />
-                            <View className="h-[1px] bg-white/5 mx-6" />
-                            <SettingRow
-                                title="Haptic Feedback"
-                                description="Subtle vibrations on alert"
-                                active={sensory.haptics}
-                                onToggle={() => setSensory(prev => ({ ...prev, haptics: !prev.haptics }))}
-                            />
-                        </View>
-                    </View>
+                                {/* Critical Reminders (Disabled) */}
+                                <View className="flex-row items-center justify-between opacity-50">
+                                    <View className="flex-1 pr-4">
+                                        <Text variant="body" weight="bold" className="text-white text-sm mb-0.5 tracking-tight">Critical Reminders</Text>
+                                        <Text variant="micro" className="text-zinc-500 font-sans-medium text-[11px] capitalize lowercase" style={{ textTransform: 'none' }}>High-priority sound for deadlines</Text>
+                                    </View>
+                                    <CustomToggle active={true} disabled />
+                                </View>
 
-                    <TouchableOpacity
-                        activeOpacity={0.9}
-                        className="w-full h-16 mb-12"
-                    >
-                        <LinearGradient
-                            colors={['#e12afb', '#9810fa']}
-                            start={{ x: 0, y: 1 }}
-                            end={{ x: 1, y: 0 }}
-                            style={{
-                                flex: 1,
-                                borderRadius: 24,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            <Text className="text-white font-sans-extrabold text-base tracking-wide">
-                                Confirm Settings
+                                {/* Auto Follow-up (Disabled) */}
+                                <View className="flex-row items-center justify-between opacity-50">
+                                    <View className="flex-1 pr-4">
+                                        <Text variant="body" weight="bold" className="text-white text-sm mb-0.5 tracking-tight">Auto Follow-up</Text>
+                                        <Text variant="micro" className="text-zinc-500 font-sans-medium text-[11px] capitalize lowercase" style={{ textTransform: 'none' }}>Re-alert if not dismissed in 30m</Text>
+                                    </View>
+                                    <CustomToggle active={false} disabled />
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Quiet Hours (Disabled) */}
+                        <View className="opacity-50">
+                            <Text variant="micro" className="text-text-dim mb-4 pl-1 tracking-[0.2em] uppercase">
+                                Quiet Hours
                             </Text>
-                        </LinearGradient>
-                    </TouchableOpacity>
+                            <View className="bg-[#121217] rounded-[32px] border border-white/5 p-6 gap-6">
+                                <View className="flex-row items-center justify-between">
+                                    <View className="flex-1 pr-4">
+                                        <Text variant="body" weight="bold" className="text-white text-sm mb-0.5 tracking-tight">Enable Quiet Hours</Text>
+                                        <Text variant="micro" className="text-zinc-500 font-sans-medium text-[11px] capitalize lowercase" style={{ textTransform: 'none' }}>Mute non-critical notifications</Text>
+                                    </View>
+                                    <CustomToggle active={false} disabled />
+                                </View>
+                            </View>
+                        </View>
 
-                </View>
+                        {/* Sensory (Disabled) */}
+                        <View className="opacity-50">
+                            <Text variant="micro" className="text-text-dim mb-4 pl-1 tracking-[0.2em] uppercase">
+                                Sensory
+                            </Text>
+                            <View className="bg-[#121217] rounded-[32px] border border-white/5 overflow-hidden">
+                                <SettingRow
+                                    title="Alert Sound"
+                                    description="Remindr signature chime"
+                                    active={true}
+                                />
+                                <View className="h-[1px] bg-white/5 mx-6" />
+                                <SettingRow
+                                    title="Haptic Feedback"
+                                    description="Subtle vibrations on alert"
+                                    active={true}
+                                />
+                            </View>
+                        </View>
+
+                        {/* Confirm Settings Button (Disabled) */}
+                        <TouchableOpacity
+                            activeOpacity={1}
+                            className="w-full h-16 mb-12 opacity-40"
+                            disabled
+                        >
+                            <LinearGradient
+                                colors={['#3f3f46', '#27272a']}
+                                start={{ x: 0, y: 1 }}
+                                end={{ x: 1, y: 0 }}
+                                style={{
+                                    flex: 1,
+                                    borderRadius: 24,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                <Text className="text-zinc-500 font-sans-extrabold text-base tracking-wide">
+                                    Confirm Settings
+                                </Text>
+                            </LinearGradient>
+                        </TouchableOpacity>
+
+                    </View>
+                )}
             </ScrollView>
         </View>
     );

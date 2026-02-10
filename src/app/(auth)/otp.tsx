@@ -1,26 +1,36 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Linking } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthService } from '@/services/auth';
 import { AuthInputScreen } from '@/components/auth/AuthInputScreen';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 
+type AuthSource = 'email' | 'telegram';
+
 export default function OtpScreen() {
     const router = useRouter();
-    const params = useLocalSearchParams<{ email?: string }>();
-    const { loginWithOtp } = useAuth();
+    const params = useLocalSearchParams<{ email?: string; source?: AuthSource }>();
+    const { login } = useAuth();
+
+    // Determine auth source from URL param
+    const source: AuthSource = params.source === 'telegram' ? 'telegram' : 'email';
+    const isTelegram = source === 'telegram';
 
     const [email, setEmail] = useState(params.email || '');
-    const [step, setStep] = useState<'email' | 'otp'>(params.email ? 'otp' : 'email');
+    // For Telegram: start at 'otp' step directly (skip email input)
+    // For Email: start at 'email' step, then move to 'otp' after requesting code
+    const [step, setStep] = useState<'email' | 'otp'>(
+        isTelegram ? 'otp' : (params.email ? 'otp' : 'email')
+    );
 
     const [otp, setOtp] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Resend Timer State
+    // Resend Timer State (only for email flow)
     const [timer, setTimer] = useState(30);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -28,7 +38,7 @@ export default function OtpScreen() {
     const otpInputRef = useRef<TextInput>(null);
 
     useEffect(() => {
-        if (timer > 0) {
+        if (timer > 0 && !isTelegram) {
             timerRef.current = setTimeout(() => setTimer(timer - 1), 1000);
         } else {
             if (timerRef.current) clearTimeout(timerRef.current);
@@ -36,12 +46,13 @@ export default function OtpScreen() {
         return () => {
             if (timerRef.current) clearTimeout(timerRef.current);
         };
-    }, [timer]);
+    }, [timer, isTelegram]);
 
     const validateEmail = (email: string) => {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     };
 
+    // Email flow: request OTP and move to code step
     const handleEmailSubmit = async () => {
         setError('');
         if (!email) {
@@ -66,6 +77,20 @@ export default function OtpScreen() {
         }
     };
 
+    // Telegram flow: just move to code step (no OTP request, user gets code from bot)
+    const handleTelegramEmailSubmit = () => {
+        setError('');
+        if (!email) {
+            setError('Please enter your email address');
+            return;
+        }
+        if (!validateEmail(email)) {
+            setError('Please enter a valid email address');
+            return;
+        }
+        setStep('otp');
+    };
+
     const handleOtpSubmit = async () => {
         setError('');
         if (otp.length !== 6) {
@@ -75,8 +100,8 @@ export default function OtpScreen() {
 
         try {
             setIsLoading(true);
-            if (!email) throw new Error('Email is missing');
-            await loginWithOtp(email, otp);
+            // For Telegram, email is null - backend looks it up from code
+            await login(email || null, otp);
             // Success handled by AuthContext
         } catch (err: any) {
             console.error(err);
@@ -100,11 +125,13 @@ export default function OtpScreen() {
     };
 
     const handleBack = () => {
-        if (step === 'otp') {
+        if (step === 'otp' && !isTelegram) {
+            // For email flow, go back to email step
             setStep('email');
             setOtp('');
             setError('');
         } else {
+            // For Telegram or email step, go back to login
             router.back();
         }
     };
@@ -116,8 +143,8 @@ export default function OtpScreen() {
                 <Svg height="100%" width="100%">
                     <Defs>
                         <RadialGradient id="grad" cx="50%" cy="50%" rx="50%" ry="50%" fx="50%" fy="50%">
-                            <Stop offset="0" stopColor="#8B5CF6" stopOpacity="0.2" />
-                            <Stop offset="1" stopColor="#8B5CF6" stopOpacity="0" />
+                            <Stop offset="0" stopColor={isTelegram ? "#2AABEE" : "#8B5CF6"} stopOpacity="0.2" />
+                            <Stop offset="1" stopColor={isTelegram ? "#2AABEE" : "#8B5CF6"} stopOpacity="0" />
                         </RadialGradient>
                     </Defs>
                     <Circle cx="50%" cy="50%" r="50%" fill="url(#grad)" />
@@ -133,13 +160,18 @@ export default function OtpScreen() {
                         {step === 'email' ? (
                             <AuthInputScreen
                                 onBack={handleBack}
-                                title="Enter your email"
+                                title={isTelegram ? "Enter your email" : "Enter your email"}
+                                subtitle={isTelegram ? "Enter the email linked to your Telegram account" : undefined}
                                 error={error}
                                 isLoading={isLoading}
-                                onContinue={handleEmailSubmit}
+                                onContinue={isTelegram ? handleTelegramEmailSubmit : handleEmailSubmit}
                             >
                                 <View className="flex-row items-center bg-logo-container px-4 h-14 rounded-2xl border border-white/5 focus:border-accent-purple/50">
-                                    <Ionicons name="mail-outline" size={20} color="#71717a" />
+                                    {isTelegram ? (
+                                        <FontAwesome name="telegram" size={20} color="#2AABEE" />
+                                    ) : (
+                                        <Ionicons name="mail-outline" size={20} color="#71717a" />
+                                    )}
                                     <TextInput
                                         className="flex-1 ml-3 text-white"
                                         placeholder="name@example.com"
@@ -163,32 +195,49 @@ export default function OtpScreen() {
                         ) : (
                             <AuthInputScreen
                                 onBack={handleBack}
-                                title="Verify your email"
+                                title={isTelegram ? "Enter Telegram code" : "Verify your email"}
                                 error={error}
                                 isLoading={isLoading}
                                 onContinue={handleOtpSubmit}
                                 continueText="Verify Code"
                                 continueDisabled={otp.length < 6}
                                 secondaryAction={
-                                    <TouchableOpacity
-                                        disabled={timer > 0}
-                                        onPress={handleResendOtp}
-                                        className="items-center py-2"
-                                    >
-                                        {timer > 0 ? (
-                                            <Text className="text-zinc-500 text-sm">Resend code in {timer}s</Text>
-                                        ) : (
-                                            <Text className="text-accent-fuchsia text-sm font-semibold">Resend Code</Text>
-                                        )}
-                                    </TouchableOpacity>
+                                    isTelegram ? (
+                                        <TouchableOpacity
+                                            onPress={() => Linking.openURL('https://t.me/remindruz_bot')}
+                                            className="items-center py-2"
+                                        >
+                                            <Text className="text-[#2AABEE] text-sm font-semibold">Open @remindruz_bot</Text>
+                                        </TouchableOpacity>
+                                    ) : (
+                                        <TouchableOpacity
+                                            disabled={timer > 0}
+                                            onPress={handleResendOtp}
+                                            className="items-center py-2"
+                                        >
+                                            {timer > 0 ? (
+                                                <Text className="text-zinc-500 text-sm">Resend code in {timer}s</Text>
+                                            ) : (
+                                                <Text className="text-accent-fuchsia text-sm font-semibold">Resend Code</Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    )
                                 }
                             >
                                 <View className="mb-2">
                                     <Text className="text-text-secondary text-base mb-4">
-                                        We sent a code to <Text className="text-white font-semibold">{email}</Text>
+                                        {isTelegram ? (
+                                            <>Enter the 6-digit code from <Text className="text-[#2AABEE] font-semibold">Telegram bot</Text></>
+                                        ) : (
+                                            <>We sent a code to <Text className="text-white font-semibold">{email}</Text></>
+                                        )}
                                     </Text>
                                     <View className="px-4 h-14 flex-row items-center bg-logo-container rounded-2xl border border-white/5 focus:border-accent-purple/50">
-                                        <Ionicons name="lock-closed-outline" size={20} color="#71717a" style={{ marginRight: 10 }} />
+                                        {isTelegram ? (
+                                            <FontAwesome name="telegram" size={20} color="#2AABEE" style={{ marginRight: 10 }} />
+                                        ) : (
+                                            <Ionicons name="lock-closed-outline" size={20} color="#71717a" style={{ marginRight: 10 }} />
+                                        )}
                                         <TextInput
                                             ref={otpInputRef}
                                             className="h-full flex-1 text-white tracking-[4px] font-bold"

@@ -1,22 +1,27 @@
-import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
+import React from 'react';
+import { View, TextInput, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Camera } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/context/AuthContext';
-import { Theme } from '@/theme';
+import { useProfileInfo } from '@/hooks/useProfileInfo';
 import { Layout } from "@/constants/layout";
 
 export default function ProfileSettingsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { user } = useAuth();
+    const { displayName, setDisplayName, email, isSaving, error, hasChanges, save } = useProfileInfo();
 
-    const [name, setName] = useState(user?.displayName || '');
-    const [email, setEmail] = useState(user?.email || '');
+    const handleSave = async () => {
+        const success = await save();
+        if (success && hasChanges) {
+            Alert.alert('Success', 'Profile updated successfully');
+        }
+    };
 
     return (
         <View className="flex-1 bg-bg-primary">
@@ -25,7 +30,7 @@ export default function ProfileSettingsScreen() {
             <ScrollView
                 className="flex-1"
                 contentContainerStyle={{
-                    ...Layout.tabBarAwareContent, // Use shared layout
+                    ...Layout.tabBarAwareContent,
                     paddingTop: insets.top + 20,
                     paddingHorizontal: 24,
                 }}
@@ -47,7 +52,6 @@ export default function ProfileSettingsScreen() {
                 {/* Avatar Section */}
                 <View className="items-center mb-12">
                     <View className="relative mb-4 group">
-                        {/* Avatar Container */}
                         <View className="w-28 h-28 rounded-[36px] overflow-hidden border-4 border-[#121217] bg-surface-dark items-center justify-center relative">
                             {user?.avatarUrl ? (
                                 <Image
@@ -60,11 +64,6 @@ export default function ProfileSettingsScreen() {
                                     {user?.displayName?.[0]?.toUpperCase() || 'U'}
                                 </Text>
                             )}
-
-                            {/* Hover/Edit Overlay (Always visible on mobile as a hint or rely on button below) 
-                 Web has hover, mobile usually needs explicit button. 
-                 The web design shows an icon overlay on hover. 
-             */}
                         </View>
                     </View>
 
@@ -86,16 +85,15 @@ export default function ProfileSettingsScreen() {
                             {/* Name Input */}
                             <View className="w-full h-16 bg-white/5 border border-white/10 rounded-[22px] px-6 relative justify-center">
                                 <TextInput
-                                    value={name}
-                                    onChangeText={setName}
-                                    placeholder="Full Name"
+                                    value={displayName}
+                                    onChangeText={setDisplayName}
+                                    placeholder="Name"
                                     placeholderTextColor="#52525b"
                                     className="font-sans-bold text-white"
                                     style={{
-                                        paddingVertical: 0,
-                                        fontFamily: 'PlusJakartaSans_700Bold'
+                                        fontSize: 16,
+                                        lineHeight: 20,
                                     }}
-                                    textAlignVertical="center"
                                 />
                                 <View className="absolute right-6 top-0 bottom-0 justify-center">
                                     <Text variant="micro" className="text-zinc-700 tracking-widest text-[10px]">
@@ -104,15 +102,15 @@ export default function ProfileSettingsScreen() {
                                 </View>
                             </View>
 
-                            {/* Email Input */}
-                            <View className="w-full h-16 bg-white/5 border border-white/10 rounded-[22px] px-6 relative justify-center">
+                            {/* Email Input (Read-only) */}
+                            <View className="w-full h-16 bg-white/3 border border-white/5 rounded-[22px] px-6 relative justify-center opacity-60">
                                 <TextInput
                                     value={email}
-                                    onChangeText={setEmail}
+                                    editable={false}
                                     placeholder="Email Address"
                                     placeholderTextColor="#52525b"
                                     keyboardType="email-address"
-                                    className="font-sans-bold text-white"
+                                    className="font-sans-bold text-zinc-400"
                                     style={{
                                         paddingVertical: 0,
                                         fontFamily: 'PlusJakartaSans_700Bold'
@@ -128,13 +126,20 @@ export default function ProfileSettingsScreen() {
                         </View>
                     </View>
 
+                    {/* Error Message */}
+                    {error && (
+                        <Text className="text-red-500 text-sm text-center">{error}</Text>
+                    )}
+
                     {/* Save Button */}
                     <TouchableOpacity
                         activeOpacity={0.9}
                         className="w-full h-16"
+                        onPress={handleSave}
+                        disabled={isSaving || !hasChanges}
                     >
                         <LinearGradient
-                            colors={['#e12afb', '#9810fa']}
+                            colors={hasChanges ? ['#e12afb', '#9810fa'] : ['#3f3f46', '#27272a']}
                             start={{ x: 0, y: 1 }}
                             end={{ x: 1, y: 0 }}
                             style={{
@@ -142,12 +147,17 @@ export default function ProfileSettingsScreen() {
                                 borderRadius: 24,
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center'
+                                justifyContent: 'center',
+                                opacity: hasChanges ? 1 : 0.5,
                             }}
                         >
-                            <Text className="text-white font-sans-extrabold text-base tracking-wide">
-                                Save Changes
-                            </Text>
+                            {isSaving ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <Text className="text-white font-sans-extrabold text-base tracking-wide">
+                                    Save Changes
+                                </Text>
+                            )}
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>

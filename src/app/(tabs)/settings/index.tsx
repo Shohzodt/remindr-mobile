@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -7,7 +7,6 @@ import {
   Bell,
   Shield,
   User as UserIcon,
-  LogOut
 } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/Text';
@@ -19,25 +18,7 @@ import { Layout } from '@/constants/layout';
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, logout } = useAuth();
-
-  const handleSignOut = async () => {
-    Alert.alert(
-      "Sign Out",
-      "Are you sure you want to sign out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Sign Out",
-          style: "destructive",
-          onPress: async () => {
-            await logout();
-            router.replace('/login');
-          }
-        }
-      ]
-    );
-  };
+  const { user } = useAuth();
 
   return (
     <View className="flex-1 bg-bg-primary">
@@ -64,8 +45,6 @@ export default function SettingsScreen() {
         {/* Profile Section */}
         <View className="items-center mb-10">
           <View className="mb-6 relative">
-            {/* Removed Glow Effect to match cleaner look */}
-
             {/* Avatar Container */}
             <View className="w-32 h-32 rounded-[40px] border-4 border-bg-primary overflow-hidden bg-[#6ccf59] items-center justify-center shadow-2xl">
               {user?.avatarUrl ? (
@@ -104,7 +83,7 @@ export default function SettingsScreen() {
             icon={UserIcon}
             title="Profile Info"
             subtitle="Details & Identity"
-            iconColor="#60a5fa" // Blue-400
+            iconColor="#60a5fa"
             iconFill="#60a5fa"
             onPress={() => router.push('/settings/profile')}
           />
@@ -113,7 +92,7 @@ export default function SettingsScreen() {
             icon={Bell}
             title="Notifications"
             subtitle="Schedules & Sounds"
-            iconColor="#facc15" // Yellow-400
+            iconColor="#facc15"
             iconFill="#facc15"
             onPress={() => router.push('/settings/notifications')}
           />
@@ -122,17 +101,9 @@ export default function SettingsScreen() {
             icon={Shield}
             title="Security"
             subtitle="Privacy & Access"
-            iconColor="#94a3b8" // Slate-400 (matches target metallic lock)
+            iconColor="#94a3b8"
             iconFill="#94a3b8"
             onPress={() => router.push('/settings/security')}
-          />
-
-          {/* Sign Out */}
-          <LargeSettingsItem
-            icon={LogOut}
-            title="Sign Out"
-            subtitle="Log out of your account"
-            onPress={handleSignOut}
           />
 
         </View>

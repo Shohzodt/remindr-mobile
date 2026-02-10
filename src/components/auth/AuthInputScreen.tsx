@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 interface AuthInputScreenProps {
     onBack: () => void;
     title: string;
+    subtitle?: string;
     error?: string;
     isLoading: boolean;
     onContinue: () => void;
@@ -17,6 +18,7 @@ interface AuthInputScreenProps {
 export const AuthInputScreen: React.FC<AuthInputScreenProps> = ({
     onBack,
     title,
+    subtitle,
     error,
     isLoading,
     onContinue,
@@ -37,9 +39,16 @@ export const AuthInputScreen: React.FC<AuthInputScreenProps> = ({
             </TouchableOpacity>
 
             {/* Title */}
-            <Text className="text-white text-large font-bold mb-8 self-start tracking-tight">
+            <Text className={`text-white text-large font-bold self-start tracking-tight ${subtitle ? 'mb-2' : 'mb-8'}`}>
                 {title}
             </Text>
+
+            {/* Subtitle */}
+            {subtitle && (
+                <Text className="text-text-secondary text-base mb-6 self-start">
+                    {subtitle}
+                </Text>
+            )}
 
             {/* Input Area */}
             <View className="w-full mb-4">

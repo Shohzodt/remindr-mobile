@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Dimensions, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Dimensions, Image } from 'react-native';
 import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTelegramAuth } from '@/hooks/useTelegramAuth';
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
@@ -11,10 +10,9 @@ const { width } = Dimensions.get('window');
 export default function LoginScreen() {
   const router = useRouter();
 
-  // Telegram
-  const { initiateTelegramLogin, isLoading: isTelegramLoading } = useTelegramAuth();
-  const handleTelegramLogin = async () => {
-    await initiateTelegramLogin();
+  // Telegram - navigate to OTP screen with telegram mode
+  const handleTelegramLogin = () => {
+    router.push('/(auth)/otp?source=telegram');
   };
 
   return (
@@ -97,22 +95,12 @@ export default function LoginScreen() {
 
             {/* Telegram Button */}
             <TouchableOpacity
-              className={`flex-row items-center justify-center h-14 rounded-2xl w-full bg-[#2AABEE] ${isTelegramLoading ? 'opacity-80' : 'active:opacity-80'}`}
+              className="flex-row items-center justify-center h-14 rounded-2xl w-full bg-[#2AABEE] active:opacity-80"
               onPress={handleTelegramLogin}
-              disabled={isTelegramLoading}
               activeOpacity={0.8}
             >
-              {isTelegramLoading ? (
-                <View className="flex-row items-center gap-3">
-                  <ActivityIndicator color="white" />
-                  <Text className="text-base font-bold text-white">Opening Telegram...</Text>
-                </View>
-              ) : (
-                <>
-                  <FontAwesome name="telegram" size={20} color="white" style={{ marginRight: 10 }} />
-                  <Text className="text-base font-bold text-white">Continue with Telegram</Text>
-                </>
-              )}
+              <FontAwesome name="telegram" size={20} color="white" style={{ marginRight: 10 }} />
+              <Text className="text-base font-bold text-white">Continue with Telegram</Text>
             </TouchableOpacity>
           </View>
 

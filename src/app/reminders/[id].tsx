@@ -85,7 +85,7 @@ export default function ReminderDetailsScreen() {
         <View className="flex-1 bg-[#050505]">
             <Stack.Screen options={{ headerShown: false }} />
 
-            <View className="flex-1 px-6 pt-6">
+            <View className="flex-1 px-6 py-6">
                 {/* Header */}
                 <View className="flex-row items-center justify-between mb-8 mt-2">
                     <View className="bg-zinc-800/50 px-4 py-1.5 rounded-full border border-white/5">

@@ -27,7 +27,7 @@ export enum ReminderPriority {
 
 export interface User {
     id: string;
-    email: string;
+    email: string | null;
     displayName: string;
     avatarUrl?: string;
     provider: 'google' | 'telegram';
@@ -49,6 +49,28 @@ export interface AuthTokens {
 
 export interface AuthResponse extends AuthTokens {
     user: User;
+}
+
+export interface UpdateProfilePayload {
+    displayName: string;
+}
+
+export interface UserSettings {
+    advanceWarningMinutes: number;
+}
+
+export interface UpdateUserSettingsPayload {
+    advanceWarningMinutes?: number;
+}
+
+export interface LinkEmailPayload {
+    email: string;
+    code: string;
+}
+
+export interface LinkTelegramPayload {
+    email: string;
+    code: string;
 }
 
 
