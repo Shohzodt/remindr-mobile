@@ -113,21 +113,35 @@ export default function NotificationsSettingsScreen() {
                                         Advance Warning
                                     </Text>
                                     <View className="flex-row gap-2 flex-wrap">
-                                        {options.map(option => (
-                                            <TouchableOpacity
-                                                key={option.value}
-                                                onPress={() => setAdvanceWarningMinutes(option.value)}
-                                                disabled={isSaving}
-                                                className={`px-5 py-2.5 rounded-xl border ${advanceWarningMinutes === option.value
-                                                    ? 'bg-[#8B5CF6] border-transparent shadow-sm'
-                                                    : 'bg-white/5 border-white/5'
-                                                    } ${isSaving ? 'opacity-50' : ''}`}
-                                            >
-                                                <Text variant="micro" weight="extrabold" className={`${advanceWarningMinutes === option.value ? 'text-white' : 'text-zinc-500'} tracking-widest`}>
-                                                    {option.label}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        ))}
+                                        {options.map(option => {
+                                            const isSelected = advanceWarningMinutes === option.value;
+                                            return (
+                                                <TouchableOpacity
+                                                    key={option.value}
+                                                    onPress={() => setAdvanceWarningMinutes(option.value)}
+                                                    disabled={isSaving}
+                                                    activeOpacity={0.7}
+                                                    style={{
+                                                        paddingHorizontal: 20,
+                                                        paddingVertical: 10,
+                                                        borderRadius: 12,
+                                                        borderWidth: 1,
+                                                        backgroundColor: isSelected ? '#8B5CF6' : 'rgba(255,255,255,0.05)',
+                                                        borderColor: isSelected ? 'transparent' : 'rgba(255,255,255,0.05)',
+                                                        opacity: isSaving ? 0.5 : 1,
+                                                    }}
+                                                >
+                                                    <Text
+                                                        variant="micro"
+                                                        weight="extrabold"
+                                                        style={{ color: isSelected ? '#fff' : '#71717a' }}
+                                                        className="tracking-widest"
+                                                    >
+                                                        {option.label}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            );
+                                        })}
                                     </View>
                                 </View>
 
@@ -212,8 +226,9 @@ export default function NotificationsSettingsScreen() {
                         </TouchableOpacity>
 
                     </View>
-                )}
-            </ScrollView>
-        </View>
+                )
+                }
+            </ScrollView >
+        </View >
     );
 }

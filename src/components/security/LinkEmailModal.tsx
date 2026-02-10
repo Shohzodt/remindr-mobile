@@ -98,13 +98,13 @@ export const LinkEmailModal: React.FC<LinkEmailModalProps> = ({ visible, onClose
                                     <TextInput
                                         value={email}
                                         onChangeText={setEmail}
-                                        placeholder="Email address"
+                                        placeholder="Email"
                                         placeholderTextColor="#52525b"
                                         keyboardType="email-address"
                                         autoCapitalize="none"
                                         autoFocus
-                                        className="font-sans-bold text-white"
-                                        style={{ paddingVertical: 0, fontSize: 16 }}
+                                        className="font-sans-medium text-white"
+                                        style={{ fontSize: 16, letterSpacing: 0.5 }}
                                     />
                                 </View>
 
@@ -146,8 +146,8 @@ export const LinkEmailModal: React.FC<LinkEmailModalProps> = ({ visible, onClose
                                         keyboardType="number-pad"
                                         maxLength={6}
                                         autoFocus
-                                        className="font-sans-bold text-white"
-                                        style={{ paddingVertical: 0, fontSize: 16 }}
+                                        className="font-sans-medium text-white"
+                                        style={{ fontSize: 16, letterSpacing: 2 }}
                                     />
                                 </View>
 

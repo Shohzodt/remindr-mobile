@@ -38,6 +38,9 @@ export const useNotificationSettings = (): UseNotificationSettingsReturn => {
 
     // Update setting immediately on select
     const setAdvanceWarningMinutes = useCallback(async (minutes: number) => {
+        // Prevent rapid clicks
+        if (isSaving) return;
+
         // Optimistically update UI
         const previousValue = advanceWarningMinutes;
         setAdvanceWarningMinutesState(minutes);
@@ -54,7 +57,7 @@ export const useNotificationSettings = (): UseNotificationSettingsReturn => {
         } finally {
             setIsSaving(false);
         }
-    }, [advanceWarningMinutes]);
+    }, [advanceWarningMinutes, isSaving]);
 
     return {
         advanceWarningMinutes,

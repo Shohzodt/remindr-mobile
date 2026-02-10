@@ -29,8 +29,9 @@ export interface User {
     id: string;
     email: string | null;
     displayName: string;
+    telegramId: string | null;
+    phoneNumber?: string;
     avatarUrl?: string;
-    provider: 'google' | 'telegram';
     createdAt: string;
     updatedAt: string;
     // Billing Extensions

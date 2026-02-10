@@ -119,9 +119,9 @@ export default function SecuritySettingsScreen() {
                                     <View className="w-10 h-10 bg-white/5 rounded-xl items-center justify-center">
                                         <FontAwesome name="envelope" size={20} color="white" />
                                     </View>
-                                    <View className="flex-shrink">
+                                    <View>
                                         <Text variant="caption" weight="extrabold" className="text-white">Email</Text>
-                                        <Text variant="micro" className="text-zinc-500 font-sans-medium text-[10px] lowercase">
+                                        <Text variant="micro" className="w-full text-zinc-500 font-sans-medium text-[10px] capitalize lowercase">
                                             {isEmailLinked ? user?.email : 'Not linked'}
                                         </Text>
                                     </View>

@@ -36,7 +36,7 @@ export const useSecuritySettings = (): UseSecuritySettingsReturn => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const isTelegramLinked = user?.provider === 'telegram';
+    const isTelegramLinked = !!user?.telegramId && (typeof user.telegramId === 'string' || typeof user.telegramId === 'number');
     const isEmailLinked = !!user?.email;
 
     const clearError = useCallback(() => setError(null), []);
