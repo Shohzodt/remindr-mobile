@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Share, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -9,6 +9,8 @@ import { Clock, MapPin, CheckCircle, Trash2, FileText, Share2, Video, ExternalLi
 import { LinearGradient } from 'expo-linear-gradient';
 import { format } from 'date-fns';
 import { parseLocation, PROVIDER_CONFIG } from '@/utils/locationParser';
+import { SmartTimingSection } from '@/components/smart-timing/SmartTimingSection';
+import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
 
 export default function ReminderDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -16,6 +18,13 @@ export default function ReminderDetailsScreen() {
 
     const { data: reminder, isLoading, error } = useReminder(id);
     const { toggleReminder, deleteReminder, isSaving } = useReminders();
+
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+    const handleTimeFixed = (newTime: string) => {
+        setToastMessage(`Moved to ${newTime}`);
+        setTimeout(() => setToastMessage(null), 3000);
+    };
 
     const handleDelete = () => {
         Alert.alert(
@@ -141,12 +150,11 @@ export default function ReminderDetailsScreen() {
                             <View className="w-14 h-14 rounded-3xl bg-zinc-900 border border-white/5 items-center justify-center shrink-0">
                                 <Clock size={24} color="#a1a1aa" />
                             </View>
-                            <View className="pt-1">
-                                <Text className="text-zinc-500 text-xs font-sans-bold uppercase tracking-[1px] mb-1.5">TIME & DATE</Text>
-                                <Text className="text-white text-xl font-sans-bold">
-                                    {reminder.time} • {format(new Date(reminder.date), 'yyyy-MM-dd')}
-                                </Text>
-                            </View>
+                            <SmartTimingSection 
+                                time={reminder.time} 
+                                date={reminder.date} 
+                                onTimeFixed={handleTimeFixed} 
+                            />
                         </View>
 
                         {/* Location */}
@@ -250,6 +258,18 @@ export default function ReminderDetailsScreen() {
                     </LinearGradient>
                 </TouchableOpacity>
             </SafeAreaView>
+
+            {toastMessage && (
+                <Animated.View 
+                    entering={SlideInDown.springify()} 
+                    exiting={SlideOutDown} 
+                    className="absolute bottom-28 self-center bg-zinc-800 border border-white/10 px-5 py-3 rounded-full shadow-xl flex-row items-center gap-2"
+                    style={{ zIndex: 100 }}
+                >
+                    <CheckCircle size={16} color="#4ade80" />
+                    <Text className="text-white font-sans-medium text-sm">{toastMessage}</Text>
+                </Animated.View>
+            )}
         </View>
     );
 }
