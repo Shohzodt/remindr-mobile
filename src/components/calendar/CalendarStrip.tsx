@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, TouchableOpacity, ScrollView } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { format, addDays, isSameDay, eachDayOfInterval, startOfDay } from 'date-fns';
@@ -13,21 +13,27 @@ interface CalendarStripProps {
 export const CalendarStrip = ({ selectedDate, onSelectDate, dots = {} }: CalendarStripProps) => {
     const scrollViewRef = useRef<ScrollView>(null);
 
-    // Use a fixed anchor for "Today" so list doesn't shift
-    // Range: -15 days ... Today ... +15 days
-    const anchorDate = startOfDay(new Date());
-    const startDate = addDays(anchorDate, -2);
+    // Anchor the visible window to a base date.
+    const [baseDate, setBaseDate] = useState(() => startOfDay(new Date(selectedDate)));
+
+    useEffect(() => {
+        const sel = startOfDay(new Date(selectedDate));
+        // We consider the "visible" window to be roughly 5 days from the base date.
+        // If they pick a date outside this visible range, we snap the strip to the new date.
+        const visibleStart = addDays(baseDate, -1);
+        const visibleEnd = addDays(baseDate, 5);
+
+        if (sel < visibleStart || sel > visibleEnd) {
+            setBaseDate(sel);
+            scrollViewRef.current?.scrollTo({ x: 0, animated: true });
+        }
+    }, [selectedDate, baseDate]);
+
+    const startDate = addDays(baseDate, -2);
     const days = eachDayOfInterval({
         start: startDate,
-        end: addDays(startDate, 15) // 15 before + today + 14 after = 30 days window approx? Let's do 30.
+        end: addDays(startDate, 16) // Generates a focused ~2 week window
     });
-
-    // Generate days around selected date or fixed window
-    // For simplicity, let's show +/- 14 days from selected? 
-    // Or better, show current week + next 2 weeks?
-    // Let's settle on generating a sliding window relative to selectedDate
-    // Actually, standard behavior is usually infinite scroll, but we'll stick to a 30-day window centered on today/selected for MVP
-    // to avoid complex virtualization for now.
 
     return (
         <View className="h-24">

@@ -8,10 +8,11 @@ import { format } from 'date-fns';
 interface SmartTimingSectionProps {
     time: string;
     date: string;
+    isPast?: boolean;
     onTimeFixed: (newTime: string) => void;
 }
 
-export function SmartTimingSection({ time, date, onTimeFixed }: SmartTimingSectionProps) {
+export function SmartTimingSection({ time, date, isPast, onTimeFixed }: SmartTimingSectionProps) {
     const [status, setStatus] = useState<'idle' | 'loading' | 'fixed'>('idle');
 
     const handleFixTiming = () => {
@@ -39,7 +40,7 @@ export function SmartTimingSection({ time, date, onTimeFixed }: SmartTimingSecti
             )}
 
             {/* Actions / States */}
-            {status === 'idle' && (
+            {isPast && status === 'idle' && (
                 <TouchableOpacity onPress={handleFixTiming} className="mt-2 flex-row items-center active:opacity-70">
                     <Text className="text-green-400 font-sans-bold">✨ Fix timing</Text>
                 </TouchableOpacity>

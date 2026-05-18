@@ -29,7 +29,7 @@ export const RemindersService = {
      */
     async getAll(): Promise<Reminder[]> {
         const response = await apiClient.get<Reminder[]>('/reminders');
-        return response.data;
+        return response.data || [];
     },
 
     /**

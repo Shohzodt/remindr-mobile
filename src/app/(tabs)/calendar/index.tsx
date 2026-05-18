@@ -64,9 +64,10 @@ export default function CalendarScreen() {
                             currentDate={new Date(selectedDate)}
                             onTodayPress={() => {
                                 const today = new Date();
-                                setSelectedDate(today.toISOString().split('T')[0]);
+                                setSelectedDate(format(today, 'yyyy-MM-dd'));
                                 setViewDate(today);
                             }}
+                            onToggleGrid={() => setIsGridVisible(true)}
                         />
 
                         <CalendarStrip
@@ -133,7 +134,7 @@ export default function CalendarScreen() {
                             <CalendarGrid
                                 currentDate={viewDate}
                                 selectedDate={new Date(selectedDate)}
-                                onSelectDate={(date) => setSelectedDate(date.toISOString().split('T')[0])}
+                                onSelectDate={(date) => setSelectedDate(format(date, 'yyyy-MM-dd'))}
                                 onChangeMonth={(amt) => setViewDate(prev => addMonths(prev, amt))}
                                 onClose={() => setIsGridVisible(false)}
                             />

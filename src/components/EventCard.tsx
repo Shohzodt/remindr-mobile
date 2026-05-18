@@ -24,6 +24,7 @@ interface EventCardProps {
   type?: 'protected' | 'risk' | 'normal';
   dimmed?: boolean;
   onClick: () => void;
+  onToggle?: () => void;
 }
 
 export const EventCard = ({
@@ -32,7 +33,8 @@ export const EventCard = ({
   isLocked = false,
   type = 'normal',
   dimmed = false,
-  onClick
+  onClick,
+  onToggle
 }: EventCardProps) => {
   const isPremium = userPlan === 'Premium';
 
@@ -142,11 +144,12 @@ export const EventCard = ({
       `}
     >
       {/* Icon */}
-      <View
+      <Pressable
+        onPress={onToggle}
         className={`w-[52px] h-[52px] rounded-2xl items-center justify-center shrink-0 ${config.classes}`}
       >
         {config.icon}
-      </View>
+      </Pressable>
 
       <View className="flex-1 min-w-0">
         <View className="flex-row items-center justify-between mb-1">

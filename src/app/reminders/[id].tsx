@@ -89,6 +89,8 @@ export default function ReminderDetailsScreen() {
     }
 
     const isCompleted = reminder.status === 'completed';
+    const reminderDate = new Date(`${reminder.date}T${reminder.time}:00`);
+    const isPast = reminderDate < new Date();
 
     return (
         <View className="flex-1 bg-[#050505]">
@@ -122,21 +124,14 @@ export default function ReminderDetailsScreen() {
 
                 <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
                     {/* Event Passed Indicator */}
-                    {!isCompleted && (() => {
-                        const reminderDate = new Date(`${reminder.date}T${reminder.time}:00`);
-                        const isPast = reminderDate < new Date();
-                        if (isPast) {
-                            return (
-                                <View className="self-start bg-zinc-800/80 px-3 py-1.5 rounded-lg mb-6 border border-white/10 flex-row items-center gap-2">
-                                    <View className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
-                                    <Text className="text-zinc-400 text-xs font-sans-bold uppercase tracking-wider">
-                                        Event Passed
-                                    </Text>
-                                </View>
-                            );
-                        }
-                        return null;
-                    })()}
+                    {!isCompleted && isPast && (
+                        <View className="self-start bg-zinc-800/80 px-3 py-1.5 rounded-lg mb-6 border border-white/10 flex-row items-center gap-2">
+                            <View className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
+                            <Text className="text-zinc-400 text-xs font-sans-bold uppercase tracking-wider">
+                                Event Passed
+                            </Text>
+                        </View>
+                    )}
 
                     {/* Title */}
                     <Text className={`text-white text-large font-sans-bold leading-[1.1] mb-10 ${isCompleted ? 'text-zinc-500 line-through' : ''}`}>
@@ -153,6 +148,7 @@ export default function ReminderDetailsScreen() {
                             <SmartTimingSection 
                                 time={reminder.time} 
                                 date={reminder.date} 
+                                isPast={isPast}
                                 onTimeFixed={handleTimeFixed} 
                             />
                         </View>

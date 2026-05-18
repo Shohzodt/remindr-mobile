@@ -8,20 +8,22 @@ import { Theme } from '@/theme';
 interface CalendarHeaderProps {
     currentDate: Date;
     onTodayPress: () => void;
+    onToggleGrid?: () => void;
 }
 
-export const CalendarHeader = ({ currentDate, onTodayPress }: CalendarHeaderProps) => {
+export const CalendarHeader = ({ currentDate, onTodayPress, onToggleGrid }: CalendarHeaderProps) => {
     return (
         <View className="flex-row items-center justify-between px-6 pt-2 pb-4">
-            <View className="flex-row items-center gap-2">
+            <TouchableOpacity 
+                className="flex-row items-center gap-2"
+                activeOpacity={0.7}
+                onPress={onToggleGrid}
+            >
                 <Text variant="h2" weight="extrabold" className="text-white">
                     {format(currentDate, 'MMMM yyyy')}
                 </Text>
-                {/* Future: Month picker modal trigger */}
-                <TouchableOpacity activeOpacity={0.7}>
-                    <ChevronDown size={20} color={Theme.colors.textDim} />
-                </TouchableOpacity>
-            </View>
+                <ChevronDown size={20} color={Theme.colors.textDim} />
+            </TouchableOpacity>
 
             <TouchableOpacity
                 onPress={onTodayPress}
