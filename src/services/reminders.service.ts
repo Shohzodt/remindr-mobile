@@ -25,6 +25,10 @@ export interface FixTimingResponse {
     engineVersion: number;
 }
 
+export interface FixTimingPayload {
+    timezone?: string;
+}
+
 export const RemindersService = {
     /**
      * Create a new reminder
@@ -68,8 +72,8 @@ export const RemindersService = {
     /**
      * Ask Smart Timing v1 to move a reminder to a better time.
      */
-    async fixTiming(id: string): Promise<FixTimingResponse> {
-        const response = await apiClient.post<FixTimingResponse>(`/reminders/${id}/fix-timing`);
+    async fixTiming(id: string, payload: FixTimingPayload = {}): Promise<FixTimingResponse> {
+        const response = await apiClient.post<FixTimingResponse>(`/reminders/${id}/fix-timing`, payload);
         return response.data;
     }
 };

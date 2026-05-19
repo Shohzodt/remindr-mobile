@@ -1,4 +1,4 @@
-import { RemindersService, CreateReminderDto, FixTimingResponse } from '@/services/reminders.service';
+import { RemindersService, CreateReminderDto, FixTimingPayload, FixTimingResponse } from '@/services/reminders.service';
 import { NotificationService } from '@/services/notifications.service';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -124,8 +124,8 @@ export function useReminder(id?: string) {
 export function useFixReminderTiming(id?: string) {
     const queryClient = useQueryClient();
 
-    return useMutation<FixTimingResponse, any, void>({
-        mutationFn: () => RemindersService.fixTiming(id!),
+    return useMutation<FixTimingResponse, any, FixTimingPayload>({
+        mutationFn: (payload) => RemindersService.fixTiming(id!, payload),
         onSuccess: async () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             queryClient.invalidateQueries({ queryKey: REMINDERS_QUERY_KEY });

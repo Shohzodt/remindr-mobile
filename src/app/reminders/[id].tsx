@@ -23,8 +23,10 @@ export default function ReminderDetailsScreen() {
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     const handleFixTiming = () => {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+
         fixTimingMutation.reset();
-        fixTimingMutation.mutate(undefined, {
+        fixTimingMutation.mutate({ timezone: timezone }, {
             onSuccess: (decision) => {
                 setToastMessage(`Moved to ${format(new Date(decision.scheduledAt), 'HH:mm')}`);
                 setTimeout(() => setToastMessage(null), 3000);
