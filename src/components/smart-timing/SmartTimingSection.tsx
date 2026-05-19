@@ -12,6 +12,7 @@ interface SmartTimingSectionProps {
     canFixTiming?: boolean;
     decision?: FixTimingResponse;
     errorMessage?: string | null;
+    fixCount?: number;
     isFixing?: boolean;
     onFixTiming: () => void;
 }
@@ -33,10 +34,12 @@ export function SmartTimingSection({
     canFixTiming,
     decision,
     errorMessage,
+    fixCount,
     isFixing,
     onFixTiming
 }: SmartTimingSectionProps) {
     const scheduledAt = decision ? new Date(decision.scheduledAt) : null;
+    const hasSeveralFixes = (fixCount ?? 0) >= 3 || decision?.risk === true;
 
     return (
         <View className="pt-1">
@@ -89,14 +92,14 @@ export function SmartTimingSection({
                         </Text>
                     </View>
 
-                    {/* Risk Signal */}
-                    {decision.risk && (
-                        <View className="bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 rounded-xl flex-row items-center gap-2.5 self-start">
-                            <AlertTriangle size={14} color="#f59e0b" />
-                            <Text className="text-amber-500/90 text-xs font-sans-medium">Delayed several times</Text>
-                        </View>
-                    )}
                 </Animated.View>
+            )}
+
+            {hasSeveralFixes && (
+                <View className="mt-3 bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 rounded-xl flex-row items-center gap-2.5 self-start">
+                    <AlertTriangle size={14} color="#f59e0b" />
+                    <Text className="text-amber-500/90 text-xs font-sans-medium">Delayed several times</Text>
+                </View>
             )}
         </View>
     );

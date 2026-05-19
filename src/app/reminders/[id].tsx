@@ -162,6 +162,7 @@ export default function ReminderDetailsScreen() {
                                 canFixTiming={isPast && !isCompleted}
                                 decision={fixTimingMutation.data}
                                 errorMessage={fixTimingError}
+                                fixCount={reminder.fixCount}
                                 isFixing={fixTimingMutation.isPending}
                                 onFixTiming={handleFixTiming}
                             />

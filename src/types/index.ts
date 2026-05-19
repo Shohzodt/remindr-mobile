@@ -136,6 +136,9 @@ export interface Reminder {
     status?: ReminderStatus | 'active' | 'completed' | 'missed' | 'missed_protected';
     notifyAt?: string; // ISO timestamp (UTC) for when to notify
     notifyBefore?: number; // Minutes before reminder to notify
+    deadlineAt?: string | null;
+    fixCount?: number;
+    timezone?: string | null;
     // Guardian Fields
     isGuardian?: boolean;
     guardianSettings?: {
