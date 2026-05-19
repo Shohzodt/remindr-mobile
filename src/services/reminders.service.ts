@@ -15,6 +15,16 @@ export interface CreateReminderDto {
     source: string;
 }
 
+export interface FixTimingResponse {
+    reminderId: string;
+    scheduledAt: string;
+    previousScheduledAt: string;
+    confidence: 'high' | 'medium' | 'low';
+    reasonCode: 'NEXT_WINDOW' | 'DEADLINE_CONSTRAINED' | 'WEEKEND_SHIFT' | 'INTERRUPTION_AVOIDED' | 'ESCALATED';
+    risk: boolean;
+    engineVersion: number;
+}
+
 export const RemindersService = {
     /**
      * Create a new reminder
@@ -52,6 +62,14 @@ export const RemindersService = {
      */
     async update(id: string, data: Partial<CreateReminderDto>): Promise<Reminder> {
         const response = await apiClient.patch<Reminder>(`/reminders/${id}`, data);
+        return response.data;
+    },
+
+    /**
+     * Ask Smart Timing v1 to move a reminder to a better time.
+     */
+    async fixTiming(id: string): Promise<FixTimingResponse> {
+        const response = await apiClient.post<FixTimingResponse>(`/reminders/${id}/fix-timing`);
         return response.data;
     }
 };

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Text } from '@/components/ui/Text';
 import { Theme } from '@/theme';
-import { useReminder, useReminders } from '@/hooks/useReminders';
+import { useFixReminderTiming, useReminder, useReminders } from '@/hooks/useReminders';
 import { Clock, MapPin, CheckCircle, Trash2, FileText, Share2, Video, ExternalLink } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format } from 'date-fns';
@@ -18,12 +18,18 @@ export default function ReminderDetailsScreen() {
 
     const { data: reminder, isLoading, error } = useReminder(id);
     const { toggleReminder, deleteReminder, isSaving } = useReminders();
+    const fixTimingMutation = useFixReminderTiming(id);
 
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-    const handleTimeFixed = (newTime: string) => {
-        setToastMessage(`Moved to ${newTime}`);
-        setTimeout(() => setToastMessage(null), 3000);
+    const handleFixTiming = () => {
+        fixTimingMutation.reset();
+        fixTimingMutation.mutate(undefined, {
+            onSuccess: (decision) => {
+                setToastMessage(`Moved to ${format(new Date(decision.scheduledAt), 'HH:mm')}`);
+                setTimeout(() => setToastMessage(null), 3000);
+            },
+        });
     };
 
     const handleDelete = () => {
@@ -91,6 +97,9 @@ export default function ReminderDetailsScreen() {
     const isCompleted = reminder.status === 'completed';
     const reminderDate = new Date(`${reminder.date}T${reminder.time}:00`);
     const isPast = reminderDate < new Date();
+    const fixTimingError = (fixTimingMutation.error as any)?.response?.data?.message
+        || (fixTimingMutation.error as any)?.message
+        || null;
 
     return (
         <View className="flex-1 bg-[#050505]">
@@ -148,8 +157,11 @@ export default function ReminderDetailsScreen() {
                             <SmartTimingSection 
                                 time={reminder.time} 
                                 date={reminder.date} 
-                                isPast={isPast}
-                                onTimeFixed={handleTimeFixed} 
+                                canFixTiming={isPast && !isCompleted}
+                                decision={fixTimingMutation.data}
+                                errorMessage={fixTimingError}
+                                isFixing={fixTimingMutation.isPending}
+                                onFixTiming={handleFixTiming}
                             />
                         </View>
 

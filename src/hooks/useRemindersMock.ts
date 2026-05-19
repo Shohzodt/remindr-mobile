@@ -14,7 +14,7 @@ export const mockReminders: Reminder[] = [
         isGuardian: true,
         status: ReminderStatus.ACTIVE,
         location: 'IRS Portal',
-        insight: 'Filing early prevents late penalties.',
+        aiInsight: 'Filing early prevents late penalties.',
     },
     {
         id: '2',
@@ -25,7 +25,7 @@ export const mockReminders: Reminder[] = [
         priority: 'must',
         isGuardian: true,
         status: ReminderStatus.ACTIVE,
-        insight: 'Renewal prevents 15% rate hike.',
+        aiInsight: 'Renewal prevents 15% rate hike.',
     },
     {
         id: '3',
