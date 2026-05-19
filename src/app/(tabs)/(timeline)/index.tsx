@@ -11,6 +11,7 @@ import { useReminders } from '@/hooks/useReminders';
 import { Bell, CheckCircle, Shield, AlertTriangle, Plus } from 'lucide-react-native';
 import { Layout } from "@/constants/layout";
 import { RefreshControl } from 'react-native';
+import { getReminderDateTime, isPastReminder } from '@/utils/reminderTime';
 
 export default function TimelineScreen() {
   const router = useRouter();
@@ -35,12 +36,6 @@ export default function TimelineScreen() {
   const isFree = userPlan === 'Free';
   const showUrgency = !isFree;
 
-  // Helper to check if reminder is in the past
-  const isPast = (dateStr: string, timeStr: string) => {
-    const reminderDate = new Date(`${dateStr}T${timeStr}:00`);
-    return reminderDate < new Date();
-  };
-
   // Mocked filtering
   const protectedDeadlines = reminders.filter(r => r.isGuardian || r.priority === 'must');
   const lockedInReminders = reminders.filter(r => r.decisionControl?.hardDeadline?.enabled);
@@ -56,11 +51,9 @@ export default function TimelineScreen() {
     !lockedInReminders.includes(r)
   );
 
-  const upcomingReminders = generalReminders.filter(r => !isPast(r.date, r.time));
-  const pastReminders = generalReminders.filter(r => isPast(r.date, r.time)).sort((a, b) => {
-    const da = new Date(`${a.date}T${a.time}:00`);
-    const db = new Date(`${b.date}T${b.time}:00`);
-    return db.getTime() - da.getTime(); // Newest first
+  const upcomingReminders = generalReminders.filter(r => !isPastReminder(r.date, r.time));
+  const pastReminders = generalReminders.filter(r => isPastReminder(r.date, r.time)).sort((a, b) => {
+    return getReminderDateTime(b.date, b.time).getTime() - getReminderDateTime(a.date, a.time).getTime(); // Newest first
   });
 
   const upNextReminders = upcomingReminders.slice(0, 4);

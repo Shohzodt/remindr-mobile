@@ -2,6 +2,11 @@ import { apiClient } from './api.client';
 import { TokenStorage } from './storage';
 import { User, AuthResponse, UpdateProfilePayload, LinkEmailPayload, LinkTelegramPayload } from '@/types';
 
+const normalizeUser = (data: any): User | null => {
+    const user = data?.user || data?.profile || data?.data || data;
+    return user && user.id ? user : null;
+};
+
 export const AuthService = {
     /**
      * Request OTP for email login.
@@ -29,9 +34,9 @@ export const AuthService = {
     /**
      * Get current user profile.
      */
-    async getProfile(): Promise<User> {
-        const response = await apiClient.get<User>('/auth/me');
-        return response.data;
+    async getProfile(): Promise<User | null> {
+        const response = await apiClient.get('/auth/me');
+        return normalizeUser(response.data);
     },
 
     /**
@@ -40,8 +45,12 @@ export const AuthService = {
     async updateProfile(payload: UpdateProfilePayload): Promise<User> {
         await apiClient.put('/auth/me', payload);
         // Fetch fresh profile after update
-        const response = await apiClient.get<User>('/auth/me');
-        return response.data;
+        const response = await apiClient.get('/auth/me');
+        const user = normalizeUser(response.data);
+        if (!user) {
+            throw new Error('Invalid user profile');
+        }
+        return user;
     },
 
     /**

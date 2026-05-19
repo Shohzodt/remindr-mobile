@@ -13,6 +13,7 @@ import { addMonths, format } from 'date-fns';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react-native';
 import { Layout } from "@/constants/layout";
 import { useReminders } from '@/hooks/useReminders';
+import { isPastReminder } from '@/utils/reminderTime';
 
 export default function CalendarScreen() {
     const router = useRouter();
@@ -90,6 +91,7 @@ export default function CalendarScreen() {
                                             <EventCard
                                                 item={item}
                                                 userPlan={userPlan}
+                                                dimmed={isPastReminder(item.date, item.time)}
                                                 onClick={() => router.push(`/reminders/${item.id}`)}
                                                 onToggle={() => toggleReminder(item.id, item.status === 'completed' ? 'active' : 'completed')}
                                             />

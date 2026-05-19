@@ -38,15 +38,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Validate token and get user profile
           const userProfile = await AuthService.getProfile();
           if (!userProfile || !userProfile.id) {
-            console.error('Invalid user profile received:', userProfile);
-            throw new Error('Invalid user profile');
+            console.warn('Invalid stored session, logging out.');
+            await TokenStorage.clearTokens();
+            setIsAuthenticated(false);
+            setUser(null);
+            return;
           }
           setUser(userProfile);
           setIsAuthenticated(true);
         }
       } catch (error: any) {
         if (error.response?.status !== 401) {
-          console.error('Auth check failed', error);
+          console.warn('Auth check failed, logging out:', error?.message || error);
         } else {
           console.log('Session expired or invalid, logging out.');
         }
@@ -78,6 +81,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Fetch fresh profile
       const userProfile = await AuthService.getProfile();
+      if (!userProfile) {
+        throw new Error('Invalid user profile');
+      }
       setUser(userProfile);
       setIsAuthenticated(true);
     } catch (error) {
@@ -99,9 +105,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshUser = async () => {
     try {
       const userProfile = await AuthService.getProfile();
-      setUser(userProfile);
+      if (userProfile) {
+        setUser(userProfile);
+      }
     } catch (error) {
-      console.error('Failed to refresh user:', error);
+      console.warn('Failed to refresh user:', error);
     }
   };
 
