@@ -140,6 +140,7 @@ export interface Reminder {
     fixCount?: number;
     timezone?: string | null;
     // Guardian Fields
+    isProtected?: boolean;
     isGuardian?: boolean;
     guardianSettings?: {
         escalation: '3_days' | '1_day' | 'on_miss';

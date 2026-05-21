@@ -2,6 +2,7 @@ import { RemindersService, CreateReminderDto, FixTimingPayload, FixTimingRespons
 import { NotificationService } from '@/services/notifications.service';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Alert } from 'react-native';
 
 export const REMINDERS_QUERY_KEY = ['reminders'];
 
@@ -36,7 +37,22 @@ export function useReminders() {
             queryClient.invalidateQueries({ queryKey: REMINDERS_QUERY_KEY });
         },
         onError: async (err: any) => {
-            console.error('Create reminder failed', err);
+            const responseMessage = err.response?.data?.message;
+            const errorText = Array.isArray(responseMessage) ? responseMessage.join(' ') : responseMessage;
+
+            console.error('Create reminder failed', {
+                status: err.response?.status,
+                data: err.response?.data,
+                url: err.config?.baseURL + err.config?.url,
+                payload: err.config?.data,
+            });
+
+            if (err.response?.status === 403) {
+                Alert.alert('Reminder Guardian', 'Reminder Guardian is a Pro feature.');
+            } else if (typeof errorText === 'string' && errorText.toLowerCase().includes('deadlineat')) {
+                Alert.alert('Reminder Guardian', 'Set a deadline first to use Reminder Guardian.');
+            }
+
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
     });
@@ -118,6 +134,21 @@ export function useReminder(id?: string) {
         queryKey: ['reminder', id],
         queryFn: () => RemindersService.getOne(id!),
         enabled: !!id,
+    });
+}
+
+export function useGuardianReminders() {
+    return useQuery({
+        queryKey: [...REMINDERS_QUERY_KEY, 'guardian'],
+        queryFn: () => RemindersService.getGuardianTimeline(),
+    });
+}
+
+export function useReminderGuardian(id?: string, enabled = true) {
+    return useQuery({
+        queryKey: ['reminder', id, 'guardian'],
+        queryFn: () => RemindersService.getGuardianDetail(id!),
+        enabled: !!id && enabled,
     });
 }
 

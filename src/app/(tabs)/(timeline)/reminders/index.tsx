@@ -102,13 +102,20 @@ export default function RemindersScreen() {
             <TextInput
               placeholder="Search reminders..."
               placeholderTextColor="#71717a"
-              className="flex-1 ml-3 text-white h-full"
+              className="flex-1 ml-3 text-white"
               style={{
                 fontFamily: 'PlusJakartaSans_400Regular',
+                fontSize: 16,
+                height: 24,
+                lineHeight: 20,
+                letterSpacing: 0,
                 textAlignVertical: 'center',
-                paddingVertical: 0
+                paddingTop: 0,
+                paddingBottom: 0,
+                includeFontPadding: false,
               }}
               autoCapitalize="none"
+              autoCorrect={false}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />

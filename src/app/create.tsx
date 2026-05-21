@@ -12,11 +12,12 @@ import { useReminders } from '@/hooks/useReminders';
 import { LocationInput } from '@/components/LocationInput';
 import { Alert, ActivityIndicator } from 'react-native';
 import { ReminderStatus, ReminderSource, ReminderPriority } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 // Mock Categories
 const CATEGORIES = [
-    { id: 'work', label: 'Work', color: '#a855f7' },
     { id: 'personal', label: 'Personal', color: '#3b82f6' },
+    { id: 'work', label: 'Work', color: '#a855f7' },
     { id: 'social', label: 'Social', color: '#10b981' },
     { id: 'other', label: 'Other', color: '#71717a' },
 ];
@@ -33,10 +34,11 @@ type RepeatOption = typeof REPEAT_OPTIONS[number]['id'];
 
 export default function CreateReminderScreen() {
     const router = useRouter();
+    const { user } = useAuth();
     const [title, setTitle] = useState('');
     const [notes, setNotes] = useState('');
     const [location, setLocation] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
+    const [selectedCategory, setSelectedCategory] = useState('personal');
     const [repeatOption, setRepeatOption] = useState<RepeatOption>('never');
     const [isRepeatPickerVisible, setIsRepeatPickerVisible] = useState(false);
     const [isProtected, setIsProtected] = useState(false);
@@ -69,10 +71,33 @@ export default function CreateReminderScreen() {
 
     const { createReminder, isSaving } = useReminders();
     const selectedRepeatLabel = REPEAT_OPTIONS.find(option => option.id === repeatOption)?.label || 'Never';
+    const hasRepeatSelected = repeatOption !== 'never';
+    const isGuardianAllowed = user?.plan === 'Pro' || user?.plan === 'Premium';
+    const hasDeadline = date instanceof Date && !Number.isNaN(date.getTime());
+
+    const handleGuardianToggle = (nextValue: boolean) => {
+        if (!isGuardianAllowed) {
+            setIsProtected(false);
+            router.push('/settings/plans-billing');
+            return;
+        }
+
+        if (nextValue && !hasDeadline) {
+            Alert.alert('Set a deadline first', 'Set a deadline first to use Reminder Guardian.');
+            return;
+        }
+
+        setIsProtected(nextValue);
+    };
 
     const handleCreate = async () => {
         if (!title.trim()) {
             Alert.alert('Missing Title', 'Please describe your reminder.');
+            return;
+        }
+
+        if (isProtected && !hasDeadline) {
+            Alert.alert('Set a deadline first', 'Set a deadline first to use Reminder Guardian.');
             return;
         }
 
@@ -96,7 +121,7 @@ export default function CreateReminderScreen() {
             date: dateStr,
             time: timeStr,
             category: selectedCategory,
-            isProtected,
+            isProtected: isGuardianAllowed && isProtected,
             priority: ReminderPriority.MEDIUM,
             status: ReminderStatus.ACTIVE,
             source: ReminderSource.MANUAL,
@@ -164,8 +189,12 @@ export default function CreateReminderScreen() {
                                 onBlur={() => setIsFocused(false)}
                                 autoFocus
                             />
-                            <TouchableOpacity className="absolute bottom-5 right-5 w-[48px] h-[48px] bg-[#202022] rounded-md items-center justify-center border border-white/5 active:bg-white/10">
-                                <Mic size={24} color="#71717a" />
+                            <TouchableOpacity
+                                disabled
+                                activeOpacity={1}
+                                className="absolute bottom-5 right-5 w-[48px] h-[48px] bg-[#202022] rounded-md items-center justify-center border border-white/5 opacity-40"
+                            >
+                                <Mic size={24} color="#52525b" />
                             </TouchableOpacity>
                         </View>
 
@@ -230,13 +259,14 @@ export default function CreateReminderScreen() {
                                     <TouchableOpacity
                                         activeOpacity={0.8}
                                         onPress={() => setIsRepeatPickerVisible(true)}
-                                        className="h-full flex-row items-center px-2.5 gap-1.5 active:bg-white/5"
+                                        className="h-full w-12 items-center justify-center active:bg-white/5"
                                     >
                                         <Repeat2 size={16} color={Theme.colors.accentPurple} />
-                                        <Text className="text-accent-purple font-sans-bold text-[14px]" numberOfLines={1}>
-                                            {selectedRepeatLabel}
-                                        </Text>
-                                        <ChevronDown size={14} color={Theme.colors.accentPurple} />
+                                        {hasRepeatSelected && (
+                                            <View className="absolute top-2 right-2 w-4 h-4 rounded-full bg-accent-purple items-center justify-center">
+                                                <Check size={10} color="#ffffff" strokeWidth={3} />
+                                            </View>
+                                        )}
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -365,21 +395,36 @@ export default function CreateReminderScreen() {
                         )}
 
                         {/* Protect Deadline */}
-                        <View className="bg-[#151518] border border-white/10 rounded-3xl p-4 flex-row items-center gap-4 mb-32">
+                        <Pressable
+                            onPress={!isGuardianAllowed ? () => router.push('/settings/plans-billing') : undefined}
+                            className={`bg-[#151518] border border-white/10 rounded-3xl p-4 flex-row items-center gap-4 mb-32 ${!isGuardianAllowed ? 'opacity-70' : ''}`}
+                        >
                             <View className="w-10 h-10 bg-[#202022] rounded-xl items-center justify-center">
                                 <Lock size={18} color="#71717a" />
                             </View>
                             <View className="flex-1">
-                                <Text className="text-white font-sans-bold text-sm">Protect this deadline</Text>
-                                <Text className="text-[#71717a] text-xs mt-1 font-sans-bold">If missed, escalation and notifications will occur.</Text>
+                                <Text className="text-white font-sans-bold text-sm">
+                                    {isGuardianAllowed ? 'Protect this deadline' : 'Reminder Guardian'}
+                                </Text>
+                                <Text className="text-[#71717a] text-xs mt-1 font-sans-bold">
+                                    {isGuardianAllowed
+                                        ? 'Keep this deadline prioritized with Reminder Guardian.'
+                                        : 'Protect important deadlines with Pro.'}
+                                </Text>
+                                {isGuardianAllowed && !hasDeadline && (
+                                    <Text className="text-amber-400 text-xs mt-2 font-sans-bold">
+                                        Set a deadline first to use Reminder Guardian.
+                                    </Text>
+                                )}
                             </View>
                             <Switch
-                                value={isProtected}
-                                onValueChange={setIsProtected}
+                                value={isGuardianAllowed && isProtected}
+                                onValueChange={handleGuardianToggle}
+                                disabled={!isGuardianAllowed || !hasDeadline}
                                 trackColor={{ false: '#27272a', true: '#9810fa' }}
                                 thumbColor="white"
                             />
-                        </View>
+                        </Pressable>
 
                     </ScrollView>
 

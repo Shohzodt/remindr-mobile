@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   AlertOctagon
 } from 'lucide-react-native';
+import { getDisplayText } from '@/utils/displayText';
 
 interface EventCardProps {
   item: Reminder | any; // 'any' allows for the mock data fields like 'risk' or 'color' which might be loosely typed
@@ -41,7 +42,7 @@ export const EventCard = ({
   // For mobile, we might want to simplify logic or keep it 1:1. Keeping 1:1 for fidelity.
   const isFree = userPlan === 'Free';
 
-  const isProtected = type === 'protected' || item.isGuardian;
+  const isProtected = type === 'protected' || item.isProtected || item.isGuardian;
   const isRisk = type === 'risk';
 
   const isHardDeadline = item.decisionControl?.hardDeadline?.enabled ?? false;
@@ -57,6 +58,14 @@ export const EventCard = ({
 
   const showUrgency = !isFree;
   const showAI = isPremium;
+  const insight = getDisplayText(item.insight || item.aiInsight);
+  const guardianInsight = isProtected
+    ? getDisplayText(item.guardianInsight || item.aiInsight || item.insight, 'AI: Reminder Guardian is keeping this deadline prioritized.')
+    : '';
+  const title = getDisplayText(item.title, 'Reminder');
+  const location = getDisplayText(item.location);
+  const time = getDisplayText(item.time, 'Today');
+  const risk = getDisplayText(item.risk);
 
   const isCompleted = item.status === 'completed';
 
@@ -159,7 +168,7 @@ export const EventCard = ({
             className={`text-white flex-1 mr-2 ${isCompleted ? 'text-zinc-500 line-through' : ''}`}
             numberOfLines={1}
           >
-            {item.title}
+            {title}
           </Text>
 
           {/* Badges */}
@@ -174,7 +183,12 @@ export const EventCard = ({
               </View>
             ) : ((showUrgency && isProtected && item.priority === 'must') || isProtected) && !isCompleted ? (
               <View className="bg-white px-2 py-0.5 rounded-full">
-                <Text variant="micro" className="text-black text-[9px]">
+                <Text
+                  variant="micro"
+                  weight="bold"
+                  className="text-black text-[9px]"
+                  style={{ letterSpacing: 0 }}
+                >
                   {item.status === 'missed_protected' ? 'MISSED' : 'PROTECTED'}
                 </Text>
               </View>
@@ -192,8 +206,8 @@ export const EventCard = ({
                   isCompleted ? 'Completed' :
                     dimmed ? 'Passed' :
                       isHardDeadline ? 'Commitment' :
-                        showUrgency && isRisk && item.risk ? `${item.risk} Risk` :
-                          (item.time || 'Today')}
+                        showUrgency && isRisk && risk ? `${risk} Risk` :
+                          time}
               </Text>
 
               {/* Days Left Logic */}
@@ -209,12 +223,12 @@ export const EventCard = ({
                 );
               })()}
 
-              {!isCompleted && item.location && (
+              {!isCompleted && location && (
                 <View className="flex-row items-center gap-1.5">
                   <View className="w-1 h-1 rounded-full bg-zinc-800" />
                   <MapPin size={12} color="#52525b" />
                   <Text variant="caption" className="text-text-dim max-w-[100px]" numberOfLines={1}>
-                    {item.location}
+                    {location}
                   </Text>
                 </View>
               )}
@@ -223,14 +237,23 @@ export const EventCard = ({
         </View>
 
         {/* AI Insight */}
-        {showAI && (isProtected || isRisk) && !isHardDeadline && !isCompleted && (
+        {isProtected && guardianInsight && !isHardDeadline && !isCompleted ? (
           <Text
             variant="caption"
             weight="medium"
             className="text-text-secondary italic mt-2 opacity-80"
             style={{ fontFamily: 'PlusJakartaSans_500Medium_Italic' }}
           >
-            AI: {item.insight || 'Context verified. No action required today.'}
+            {guardianInsight}
+          </Text>
+        ) : showAI && insight && isRisk && !isHardDeadline && !isCompleted && (
+          <Text
+            variant="caption"
+            weight="medium"
+            className="text-text-secondary italic mt-2 opacity-80"
+            style={{ fontFamily: 'PlusJakartaSans_500Medium_Italic' }}
+          >
+            {insight}
           </Text>
         )}
       </View>

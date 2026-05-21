@@ -1,61 +1,58 @@
 import React from 'react';
-import { View, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, View, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/Text';
 import { EventCard } from '@/components/EventCard';
-import { SoftLockPlaceholder } from '@/components/SoftLockPlaceholder';
 import { EmptyState } from '@/components/EmptyState';
+import { ProtectedInfoSheet } from '@/components/ProtectedInfoSheet';
 import { useAuth } from '@/context/AuthContext';
-import { useReminders } from '@/hooks/useReminders';
-import { Bell, CheckCircle, Shield, AlertTriangle, Plus } from 'lucide-react-native';
+import { useGuardianReminders, useReminders } from '@/hooks/useReminders';
+import { Bell, CheckCircle, Shield } from 'lucide-react-native';
 import { Layout } from "@/constants/layout";
 import { RefreshControl } from 'react-native';
-import { getReminderDateTime, isPastReminder } from '@/utils/reminderTime';
+import { formatGuardianDueLabel, isPastReminder } from '@/utils/reminderTime';
+import { getDisplayText } from '@/utils/displayText';
+import { Reminder } from '@/types';
 
 export default function TimelineScreen() {
   const router = useRouter();
   const { user } = useAuth(); // Assuming useAuth provides user object
   // Use Real Hook
-  const { reminders, isLoading, refetch, toggleReminder } = useReminders();
-  const { top: insetsTop } = useSafeAreaInsets();
-  const isAuthenticated = !!user;
+  const { reminders: apiReminders, isLoading, refetch } = useReminders();
+  const {
+    data: guardianTimeline,
+    isLoading: isGuardianLoading,
+    error: guardianError,
+    refetch: refetchGuardian,
+  } = useGuardianReminders();
+  const reminders = apiReminders;
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [selectedProtectedReminder, setSelectedProtectedReminder] = React.useState<Reminder | null>(null);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await refetch();
+      await Promise.all([refetch(), refetchGuardian()]);
     } finally {
       setIsRefreshing(false);
     }
   };
 
   // Logic from Web
-  const userPlan = 'Free' as 'Premium' | 'Free' | 'Pro'; // Temporarily set to Free for UI verification
-  const isFree = userPlan === 'Free';
-  const showUrgency = !isFree;
-
-  // Mocked filtering
-  const protectedDeadlines = reminders.filter(r => r.isGuardian || r.priority === 'must');
-  const lockedInReminders = reminders.filter(r => r.decisionControl?.hardDeadline?.enabled);
-  const riskReminders = reminders.filter(r => r.priority === 'high' || r.risk); // Rough mapping
+  const userPlan = user?.plan || 'Free';
+  const guardianItems = guardianTimeline?.items || [];
+  const isGuardianLocked = Boolean(guardianTimeline?.locked);
+  const guardianUpsellTitle = getDisplayText(guardianTimeline?.upsellTitle, 'Reminder Guardian');
+  const guardianUpsellSummary = getDisplayText(guardianTimeline?.upsellSummary || guardianTimeline?.summary, 'Upgrade to Pro to unlock Reminder Guardian.');
+  const guardianCtaLabel = getDisplayText(guardianTimeline?.ctaLabel, 'Upgrade to Pro');
 
   // Time-based filtering for general reminders
   const generalReminders = reminders.filter(r =>
-    !r.isGuardian &&
-    !r.decisionControl?.hardDeadline?.enabled &&
-    // distinct from risk if risk is defined by priority too, avoiding dupes if needed
-    // For now simplistic exclusion of already handled categories if they overlap
-    !protectedDeadlines.includes(r) &&
-    !lockedInReminders.includes(r)
+    !r.isGuardian && !r.isProtected
   );
 
   const upcomingReminders = generalReminders.filter(r => !isPastReminder(r.date, r.time));
-  const pastReminders = generalReminders.filter(r => isPastReminder(r.date, r.time)).sort((a, b) => {
-    return getReminderDateTime(b.date, b.time).getTime() - getReminderDateTime(a.date, a.time).getTime(); // Newest first
-  });
-
   const upNextReminders = upcomingReminders.slice(0, 4);
 
   const getGreeting = () => {
@@ -90,7 +87,7 @@ export default function TimelineScreen() {
             }
           >
             {/* HEADER */}
-            <View className="flex-row justify-between items-start mb-10">
+            <View className="flex-row justify-between items-start mb-8">
               <View>
                 <Text className="text-large font-sans-extrabold text-white">Timeline</Text>
                 <Text className="text-md font-sans-medium text-text-muted">
@@ -124,78 +121,61 @@ export default function TimelineScreen() {
               </View>
             </View>
 
-            {/* 1) PROTECTED TRACKING */}
-            <View className="mb-12">
-              <Text variant="micro" className="text-text-dim mb-5 pl-1">Protected tracking</Text>
+            {/* 1) REMINDER GUARDIAN */}
+            <View className="mb-10">
+              <Text variant="micro" className="text-text-dim mb-5 pl-1">Reminder Guardian</Text>
               <View className="gap-3">
-                {isFree ? (
-                  <SoftLockPlaceholder
-                    title="Autonomous Protection"
-                    description="Monitor high-consequence contracts automatically."
+                {isGuardianLoading ? (
+                  <View className="rounded-[32px] border border-white/5 bg-card p-8 items-center justify-center">
+                    <ActivityIndicator color="#A855F7" />
+                  </View>
+                ) : guardianError ? (
+                  <EmptyState
+                    message="Guardian unavailable"
+                    subtext="Reminder Guardian could not be loaded right now."
+                    icon={<Shield size={32} color="#52525b" />}
                   />
-                ) : protectedDeadlines.length > 0 ? (
-                  protectedDeadlines.map(item => (
-                    <EventCard
-                      key={item.id}
-                      item={item}
-                      userPlan={userPlan}
-                      type="protected"
-                      onClick={() => router.push(`/reminders/${item.id}`)}
-                    />
-                  ))
+                ) : isGuardianLocked ? (
+                  <EmptyState
+                    message={guardianUpsellTitle}
+                    subtext={guardianUpsellSummary}
+                    icon={<Shield size={32} color="#52525b" />}
+                    actionLabel={guardianCtaLabel}
+                    onAction={() => router.push('/settings/plans-billing')}
+                  />
+                ) : guardianItems.length > 0 ? (
+                  guardianItems.map(item => {
+                    const displayItem = {
+                      ...item,
+                      time: formatGuardianDueLabel(item.deadlineAt),
+                      guardianInsight: getDisplayText(
+                        item.aiInsight || (item as any).insight,
+                        'AI: Reminder Guardian is keeping this deadline prioritized.'
+                      ),
+                    };
+
+                    return (
+                      <EventCard
+                        key={item.id}
+                        item={displayItem}
+                        userPlan={userPlan}
+                        type="protected"
+                        onClick={() => setSelectedProtectedReminder(displayItem as Reminder)}
+                      />
+                    );
+                  })
                 ) : (
                   <EmptyState
-                    message="All Systems Secure"
-                    subtext="No protected deadlines requiring attention this week."
+                    message="No protected reminders"
+                    subtext="Reminder Guardian has no reminders to show right now."
                     icon={<Shield size={32} color="#52525b" />}
                   />
                 )}
               </View>
             </View>
 
-            {/* 2) RISK MONITORING */}
-            <View className="mb-12">
-              <Text variant="micro" className="text-text-dim mb-5 pl-1">Risk monitoring</Text>
-              <View className="gap-3">
-                {isFree ? (
-                  <SoftLockPlaceholder
-                    title="Risk Engine"
-                    description="Prioritize events based on urgency and potential impact."
-                  />
-                )
-                  : (lockedInReminders.length > 0 || riskReminders.length > 0) ? (
-                    <>
-                      {lockedInReminders.map(item => (
-                        <EventCard
-                          key={item.id}
-                          item={item}
-                          userPlan={userPlan}
-                          type="risk"
-                          onClick={() => router.push(`/reminders/${item.id}`)}
-                        />
-                      ))}
-                      {riskReminders.map(item => (
-                        <EventCard
-                          key={item.id}
-                          item={item}
-                          userPlan={userPlan}
-                          type="risk"
-                          onClick={() => router.push(`/reminders/${item.id}`)}
-                        />
-                      ))}
-                    </>
-                  ) : (
-                    <EmptyState
-                      message="Zero Hazards"
-                      subtext="No locked-in commitments or risks detected."
-                      icon={<AlertTriangle size={32} color="#52525b" />}
-                    />
-                  )}
-              </View>
-            </View>
-
-            {/* 3) UP NEXT */}
-            <View className="mb-12">
+            {/* 2) UP NEXT */}
+            <View className="mb-10">
               <View className="flex-row justify-between items-end px-1 mb-6">
                 <View className="flex-row items-center gap-2.5">
                   <Text className="text-two-xl font-sans-extrabold text-white">Up Next</Text>
@@ -228,31 +208,15 @@ export default function TimelineScreen() {
               </View>
             </View>
 
-            {/* 4) ACTIVITY HISTORY */}
-            <View className="mt-8 pt-8 border-t border-white/5 pb-10">
-              <Text variant="micro" className="text-text-dim mb-6 pl-1">Activity history</Text>
-              <View className="gap-3">
-                {pastReminders.length > 0 ? (
-                  pastReminders.map(item => (
-                    <EventCard
-                      key={item.id}
-                      item={item}
-                      userPlan={userPlan}
-                      dimmed={true}
-                      onClick={() => router.push(`/reminders/${item.id}`)}
-                    />
-                  ))
-                ) : (
-                  <Text variant="micro" className="text-text-dim text-center py-6">No previous records</Text>
-                )}
-              </View>
-
-              <Text variant="micro" className="text-center text-zinc-800 mt-12 mb-4 tracking-[0.2em]">
-                Timeline Protected by Remindr
-              </Text>
-            </View>
+            {/* TODO: Activity History hided for now */}
 
           </ScrollView>
+
+          <ProtectedInfoSheet
+            visible={!!selectedProtectedReminder}
+            reminder={selectedProtectedReminder}
+            onClose={() => setSelectedProtectedReminder(null)}
+          />
         </SafeAreaView>
       )}
     </View>

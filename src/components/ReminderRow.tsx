@@ -3,6 +3,7 @@ import { View, Pressable, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Reminder } from '@/types';
 import { Trash2, Check } from 'lucide-react-native';
+import { getDisplayText } from '@/utils/displayText';
 
 interface ReminderRowProps {
   item: Reminder;
@@ -36,7 +37,9 @@ export const ReminderRow = ({ item, onToggle, onDelete, isLoading = false, onPre
   }, [item.date, item.time, item.status]);
 
   // Format date for display
-  const displayDate = item.time || item.date;
+  const displayDate = getDisplayText(item.time || item.date);
+  const title = getDisplayText(item.title, 'Reminder');
+  const category = getDisplayText(item.category);
 
   return (
     <View className="flex-row items-center bg-logo-container border border-white/5 p-4 rounded-2xl mb-3">
@@ -71,7 +74,7 @@ export const ReminderRow = ({ item, onToggle, onDelete, isLoading = false, onPre
             numberOfLines={1}
             ellipsizeMode="tail"
           >
-            {item.title}
+            {title}
           </Text>
         </View>
 
@@ -88,7 +91,7 @@ export const ReminderRow = ({ item, onToggle, onDelete, isLoading = false, onPre
           <Text variant="caption" className="text-text-dim">•</Text>
 
           <Text variant="caption" className="text-accent-fuchsia font-medium">
-            {item.category}
+            {category}
           </Text>
         </View>
       </Pressable>

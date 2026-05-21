@@ -1,23 +1,33 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Modal, Image } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
     ArrowLeft,
     CreditCard,
     Plus,
     Check,
-    Sparkles,
-    AlertTriangle,
-    Zap
 } from 'lucide-react-native';
 
-import { Theme } from "@/theme";
 import { Layout } from "@/constants/layout";
 import { Text } from '@/components/ui/Text';
-import { useBillingMock, AICreditPack } from '@/hooks/useBillingMock';
-import { Plan } from '@/types';
+import { useBillingMock } from '@/hooks/useBillingMock';
+
+type PlanId = 'free' | 'pro';
+
+interface PlanFeature {
+    title: string;
+}
+
+interface PlanConfig {
+    id: PlanId;
+    title: string;
+    price: string;
+    interval: string;
+    recommended?: boolean;
+    isCurrent: boolean;
+    features: PlanFeature[];
+}
 
 export default function PlansBillingScreen() {
     const router = useRouter();
@@ -25,40 +35,51 @@ export default function PlansBillingScreen() {
     const {
         userPlan,
         paymentMethod,
-        subMetadata,
-        aiState,
         handlePlanChange,
-        handleCancelSubscription,
         handleAddPayment,
         handleRemovePayment,
-        purchaseCredits
     } = useBillingMock();
 
-    // Modal States
-    const [showConfirmCancel, setShowConfirmCancel] = useState(false);
     const [showConfirmRemoveCard, setShowConfirmRemoveCard] = useState(false);
-    const [showTopUpModal, setShowTopUpModal] = useState(false);
-    const [selectedPack, setSelectedPack] = useState<AICreditPack | null>(null);
 
-    const isFree = userPlan === 'Free';
+    const currentPlan: 'Free' | 'Pro' = userPlan === 'Free' ? 'Free' : 'Pro';
     const hasCard = !!paymentMethod;
-    const canRemoveCard = isFree && hasCard;
+    const canRemoveCard = currentPlan === 'Free' && hasCard;
 
-    const starterPlanFeatures = ['Manual reminders', 'Calendar view', 'Up to 5 deadlines', 'Basic notifications'];
-    const proPlanFeatures = ['Unlimited reminders', 'Consequence-aware logic', 'Protected deadlines', 'Smart scheduling'];
-    const premiumPlanFeatures = ['10 AI scans/mo', 'Shared deadlines', 'Responsibility assignment', 'Advanced insights'];
-
-    const CREDIT_PACKS: AICreditPack[] = [
-        { id: 'pack_10', credits: 10, price: 2.99 },
-        { id: 'pack_50', credits: 50, price: 9.99, popular: true },
-        { id: 'pack_100', credits: 100, price: 15.99 },
+    const plans: PlanConfig[] = [
+        {
+            id: 'free',
+            title: 'Free',
+            price: '$0',
+            interval: '/mo',
+            isCurrent: currentPlan === 'Free',
+            features: [
+                { title: 'Manual reminders' },
+                { title: 'Calendar view' },
+                { title: 'Categories' },
+                { title: 'Basic notifications' },
+                { title: 'Up to 10 reminders' },
+                { title: 'View Discover events' },
+            ],
+        },
+        {
+            id: 'pro',
+            title: 'Pro',
+            price: '$4.99',
+            interval: '/mo',
+            recommended: true,
+            isCurrent: currentPlan === 'Pro',
+            features: [
+                { title: 'Unlimited reminders' },
+                { title: 'Reminder Guardian protection' },
+                { title: 'Risk Monitoring' },
+                { title: 'Smart Timing Assistant' },
+                { title: 'AI document analysis' },
+                { title: 'Add reminders from Discover' },
+                { title: 'Recurring reminders' },
+            ],
+        },
     ];
-
-    const handlePurchase = (pack: AICreditPack) => {
-        purchaseCredits(pack.credits);
-        setShowTopUpModal(false);
-        setSelectedPack(null);
-    };
 
     return (
         <View className="flex-1 bg-bg-primary">
@@ -70,6 +91,7 @@ export default function PlansBillingScreen() {
                     ...Layout.tabBarAwareContent,
                     paddingTop: insets.top + 20,
                     paddingHorizontal: 24,
+                    paddingBottom: 160,
                 }}
                 showsVerticalScrollIndicator={false}
             >
@@ -85,84 +107,6 @@ export default function PlansBillingScreen() {
                         Plans & Billing
                     </Text>
                 </View>
-
-                {/* Subscription Status Bar */}
-                {!isFree && (
-                    <View className="mb-8">
-                        <View className={`bg-[#121217] p-5 rounded-[28px] border ${subMetadata.isCancelled ? 'border-amber-500/20 bg-amber-500/5' : 'border-white/5'}`}>
-                            <View className="flex-row justify-between items-center mb-1">
-                                <Text variant="micro" className="text-zinc-500 uppercase tracking-widest text-[10px]">Status</Text>
-                                <Text variant="micro" className={`uppercase tracking-widest text-[10px] ${subMetadata.isCancelled ? 'text-amber-500' : 'text-emerald-500'}`}>
-                                    {subMetadata.isCancelled ? 'Ending Soon' : 'Active'}
-                                </Text>
-                            </View>
-                            <Text weight="bold" className="text-white text-sm tracking-tight mt-1">
-                                {subMetadata.isCancelled
-                                    ? `Subscription ends on ${subMetadata.billingPeriodEnd}`
-                                    : `Next billing date: ${subMetadata.billingPeriodEnd}`}
-                            </Text>
-                        </View>
-                    </View>
-                )}
-
-                {/* AI Usage Stats */}
-                {!isFree && (
-                    <View className="mb-12">
-                        <View className="flex-row justify-between items-end mb-4 px-2">
-                            <Text variant="micro" className="text-zinc-600 uppercase tracking-[0.2em] text-[10px]">AI Credits</Text>
-                            <TouchableOpacity onPress={() => setShowTopUpModal(true)}>
-                                <Text variant="micro" className="text-purple-400 uppercase tracking-widest text-[10px]">Add Credits</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View className="bg-[#121217] p-6 rounded-[28px] border border-white/5">
-                            {/* Monthly Plan Usage */}
-                            <View className="mb-6">
-                                <View className="flex-row justify-between items-end mb-2">
-                                    <View>
-                                        <Text variant="micro" className="text-zinc-500 uppercase tracking-widest mb-1 text-[10px]">Monthly Plan</Text>
-                                        <Text weight="bold" className="text-white text-sm">
-                                            {aiState.plan.usedThisMonth} <Text className="text-zinc-500">/ {aiState.plan.monthlyLimit} scans</Text>
-                                        </Text>
-                                    </View>
-                                    <Text weight="bold" className="text-[10px] text-zinc-600">Resets Nov 1</Text>
-                                </View>
-
-                                {/* Progress Bar */}
-                                <View className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                    <View
-                                        className={`h-full rounded-full ${(aiState.plan.usedThisMonth / aiState.plan.monthlyLimit) >= 1
-                                            ? 'bg-red-500'
-                                            : 'bg-purple-600' // NativeWind gradient support on simple views is tricky, solid color is safer for progress bar
-                                            }`}
-                                        style={{ width: `${Math.min((aiState.plan.usedThisMonth / aiState.plan.monthlyLimit) * 100, 100)}%` }}
-                                    />
-                                </View>
-                                {(aiState.plan.usedThisMonth >= aiState.plan.monthlyLimit) && (
-                                    <View className="mt-2 flex-row items-center gap-1.5">
-                                        <AlertTriangle size={12} color="#ef4444" />
-                                        <Text weight="bold" className="text-red-500 text-[10px]">Monthly limit reached</Text>
-                                    </View>
-                                )}
-                            </View>
-
-                            {/* Add-on Credits */}
-                            <View className="pt-6 border-t border-white/5 flex-row items-center justify-between">
-                                <View>
-                                    <Text variant="micro" className="text-zinc-500 uppercase tracking-widest mb-1 text-[10px]">Add-on Balance</Text>
-                                    <Text weight="bold" className="text-white text-sm">
-                                        {aiState.addOns.balance > 0 ? `+${aiState.addOns.balance} extra scans` : '0 extra scans'}
-                                    </Text>
-                                </View>
-                                {aiState.addOns.balance > 0 && (
-                                    <View className="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                        <Text variant="micro" className="text-emerald-500 uppercase tracking-widest text-[10px]">Available</Text>
-                                    </View>
-                                )}
-                            </View>
-                        </View>
-                    </View>
-                )}
 
                 {/* Payment Method */}
                 <View className="mb-12">
@@ -215,125 +159,18 @@ export default function PlansBillingScreen() {
                 </View>
 
                 {/* Available Plans */}
-                <View className="mb-16 gap-8">
+                <View className="gap-6">
                     <Text variant="micro" className="text-zinc-600 uppercase tracking-[0.2em] px-2 text-[10px]">Available Plans</Text>
 
-                    {/* Starter Plan */}
-                    <View className={`bg-[#0B0B0F] rounded-[32px] p-7 border ${userPlan === 'Free' ? 'border-zinc-400' : 'border-zinc-800 opacity-60'}`}>
-                        <View className="flex-row justify-between items-center mb-4">
-                            <Text weight="bold" className="text-xl text-zinc-200 tracking-tight">Starter</Text>
-                            {userPlan === 'Free' && (
-                                <View className="bg-zinc-900 px-2.5 py-1 rounded-md border border-zinc-700">
-                                    <Text variant="micro" className="text-zinc-400 text-[8px] uppercase tracking-[0.15em]">Current</Text>
-                                </View>
-                            )}
-                        </View>
-                        <View className="gap-2.5">
-                            {starterPlanFeatures.map((f, i) => (
-                                <View key={i} className="flex-row items-center gap-2.5">
-                                    <View className="w-1 h-1 rounded-full bg-zinc-700" />
-                                    <Text weight="medium" className="text-zinc-400 text-[12px]">{f}</Text>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-
-                    {/* Pro Plan */}
-                    <View className={`bg-[#0F0F15] rounded-[32px] border p-7 ${userPlan === 'Pro' ? 'border-purple-500/50' : 'border-white/10'}`}>
-                        <View className="flex-row justify-between items-start mb-2">
-                            <View>
-                                <Text weight="extrabold" className="text-2xl text-white tracking-tight">Pro</Text>
-                                <View className="flex-row items-baseline">
-                                    <Text weight="extrabold" className="text-[#8B5CF6] text-xl tracking-tight">$4.99</Text>
-                                    <Text weight="bold" className="text-[12px] text-zinc-500 ml-1">/mo</Text>
-                                </View>
-                            </View>
-                            {userPlan === 'Pro' && (
-                                <View className="px-3 py-1.5 rounded-full bg-zinc-700">
-                                    <Text variant="micro" className="text-white text-[8px] uppercase tracking-[0.15em]">ACTIVE</Text>
-                                </View>
-                            )}
-                        </View>
-                        <View className="gap-3 my-6">
-                            {proPlanFeatures.map((f, i) => (
-                                <View key={i} className="flex-row items-center gap-3">
-                                    <Check size={16} color="#8B5CF6" />
-                                    <Text weight="bold" className="text-white text-[12px] tracking-tight">{f}</Text>
-                                </View>
-                            ))}
-                        </View>
-                        {userPlan !== 'Pro' && (
-                            <TouchableOpacity
-                                onPress={() => handlePlanChange('Pro')}
-                                activeOpacity={0.9}
-                                className="w-full h-14 bg-white rounded-2xl shadow-lg items-center justify-center active:scale-[0.98]"
-                            >
-                                <Text weight="extrabold" className="text-black text-sm">
-                                    {userPlan === 'Free' ? 'Upgrade to Pro' : 'Switch to Pro'}
-                                </Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-
-                    {/* Premium Plan */}
-                    <View className={`bg-[#08080A] rounded-[32px] border p-7 ${userPlan === 'Premium' ? 'border-white/40' : 'border-white/10'}`}>
-                        <View className="flex-row justify-between items-start mb-2">
-                            <View>
-                                <Text weight="extrabold" className="text-2xl text-white tracking-tight">Premium</Text>
-                                <View className="flex-row items-baseline">
-                                    <Text weight="extrabold" className="text-zinc-200 text-xl tracking-tight">$9.99</Text>
-                                    <Text weight="bold" className="text-[12px] text-zinc-500 ml-1">/mo</Text>
-                                </View>
-                            </View>
-                            {userPlan === 'Premium' && (
-                                <View className="px-3 py-1.5 rounded-full bg-zinc-500">
-                                    <Text variant="micro" className="text-black text-[8px] uppercase tracking-[0.15em]">ACTIVE</Text>
-                                </View>
-                            )}
-                        </View>
-                        <View className="gap-3 my-6">
-                            {premiumPlanFeatures.map((f, i) => (
-                                <View key={i} className="flex-row items-center gap-3">
-                                    <Check size={16} color="white" />
-                                    <Text weight="bold" className="text-white text-[12px] tracking-tight">{f}</Text>
-                                </View>
-                            ))}
-                        </View>
-                        {userPlan !== 'Premium' && (
-                            <TouchableOpacity
-                                onPress={() => handlePlanChange('Premium')}
-                                activeOpacity={0.9}
-                                className="w-full h-14 bg-white rounded-2xl shadow-lg items-center justify-center active:scale-[0.98]"
-                            >
-                                <Text weight="extrabold" className="text-black text-sm">
-                                    {userPlan === 'Free' || userPlan === 'Pro' ? 'Upgrade to Premium' : 'Switch to Premium'}
-                                </Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
+                    {plans.map((plan) => (
+                        <PlanCard
+                            key={plan.id}
+                            plan={plan}
+                            onUpgrade={() => handlePlanChange('Pro')}
+                        />
+                    ))}
                 </View>
-
-                {/* Cancellation Block */}
-                {!isFree && !subMetadata.isCancelled && (
-                    <View className="mt-8 pt-8 border-t border-white/5 pb-10 items-center">
-                        <TouchableOpacity onPress={() => setShowConfirmCancel(true)}>
-                            <Text variant="micro" className="text-zinc-600 uppercase tracking-[0.2em] text-[11px]">Cancel Subscription</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
             </ScrollView>
-
-            {/* Modals */}
-            <ConfirmationModal
-                visible={showConfirmCancel}
-                title="Cancel Subscription?"
-                message={`Your benefits remain active until ${subMetadata.billingPeriodEnd}. No further charges will be processed.`}
-                confirmText="Confirm Cancellation"
-                cancelText="Keep Plan"
-                onConfirm={() => { handleCancelSubscription(); setShowConfirmCancel(false); }}
-                onCancel={() => setShowConfirmCancel(false)}
-                isDestructive
-            />
 
             <ConfirmationModal
                 visible={showConfirmRemoveCard}
@@ -345,18 +182,76 @@ export default function PlansBillingScreen() {
                 onCancel={() => setShowConfirmRemoveCard(false)}
                 isDestructive
             />
-
-            <TopUpModal
-                visible={showTopUpModal}
-                packs={CREDIT_PACKS}
-                onSelect={(pack) => handlePurchase(pack)}
-                onClose={() => setShowTopUpModal(false)}
-            />
         </View>
     );
 }
 
-// Sub-components for Modals (Inline for single file convenience like Web)
+function PlanCard({ plan, onUpgrade }: { plan: PlanConfig; onUpgrade: () => void }) {
+    const isPro = plan.id === 'pro';
+
+    return (
+        <View
+            className={`rounded-[32px] border p-7 ${isPro
+                ? 'bg-[#0F0F15] border-purple-500/30'
+                : 'bg-[#0B0B0F] border-white/10'
+                } ${plan.isCurrent ? 'opacity-100' : ''}`}
+        >
+            <View className="flex-row justify-between items-start mb-5">
+                <View>
+                    <View className="flex-row items-center gap-2 mb-2">
+                        <Text weight="extrabold" className={`${isPro ? 'text-2xl text-white' : 'text-xl text-zinc-200'} tracking-tight`}>
+                            {plan.title}
+                        </Text>
+                        {plan.recommended && !plan.isCurrent && (
+                            <View className="px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/30">
+                                <Text variant="micro" className="text-purple-300 text-[8px] uppercase tracking-[0.15em]">Recommended</Text>
+                            </View>
+                        )}
+                    </View>
+                    <View className="flex-row items-baseline">
+                        <Text weight="extrabold" className={`${isPro ? 'text-[#8B5CF6]' : 'text-zinc-200'} text-xl tracking-tight`}>
+                            {plan.price}
+                        </Text>
+                        <Text weight="bold" className="text-[12px] text-zinc-500 ml-1">
+                            {plan.interval}
+                        </Text>
+                    </View>
+                </View>
+
+                {plan.isCurrent && (
+                    <View className={`${isPro ? 'bg-purple-500/15 border-purple-500/30' : 'bg-zinc-900 border-zinc-700'} px-3 py-1.5 rounded-full border`}>
+                        <Text variant="micro" className={`${isPro ? 'text-purple-200' : 'text-zinc-400'} text-[8px] uppercase tracking-[0.15em]`}>
+                            Current plan
+                        </Text>
+                    </View>
+                )}
+            </View>
+
+            <View className="gap-3 mb-6">
+                {plan.features.map((feature) => (
+                    <View key={feature.title} className="flex-row items-center gap-3">
+                        <Check size={15} color={isPro ? '#8B5CF6' : '#71717a'} />
+                        <Text weight={isPro ? 'bold' : 'medium'} className={`${isPro ? 'text-white' : 'text-zinc-400'} text-[12px] tracking-tight`}>
+                            {feature.title}
+                        </Text>
+                    </View>
+                ))}
+            </View>
+
+            {isPro && !plan.isCurrent && (
+                <TouchableOpacity
+                    onPress={onUpgrade}
+                    activeOpacity={0.9}
+                    className="w-full h-14 bg-white rounded-2xl shadow-lg items-center justify-center active:scale-[0.98]"
+                >
+                    <Text weight="extrabold" className="text-black text-sm">
+                        Upgrade to Pro
+                    </Text>
+                </TouchableOpacity>
+            )}
+        </View>
+    );
+}
 
 function ConfirmationModal({
     visible, title, message, confirmText, cancelText, onConfirm, onCancel, isDestructive
@@ -389,47 +284,6 @@ function ConfirmationModal({
                             <Text weight="bold" className="text-zinc-400 text-sm">{cancelText}</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
-            </View>
-        </Modal>
-    );
-}
-
-function TopUpModal({ visible, packs, onSelect, onClose }: { visible: boolean; packs: AICreditPack[]; onSelect: (p: AICreditPack) => void; onClose: () => void }) {
-    return (
-        <Modal visible={visible} transparent animationType="slide">
-            <View className="flex-1 justify-end bg-black/60">
-                <View className="bg-[#0B0B0F] rounded-t-[48px] border-t border-white/10 p-8 pb-12">
-                    <View className="w-12 h-1.5 bg-zinc-800 rounded-full mx-auto mb-8 opacity-50" />
-                    <View className="items-center mb-8">
-                        <Sparkles size={32} color="#c084fc" />
-                        <Text weight="extrabold" className="text-2xl text-white tracking-tighter mt-4">Top Up Credits</Text>
-                    </View>
-
-                    <View className="gap-4 mb-4">
-                        {packs.map(pack => (
-                            <TouchableOpacity
-                                key={pack.id}
-                                onPress={() => onSelect(pack)}
-                                className={`w-full p-4 rounded-2xl border flex-row items-center justify-between ${pack.popular ? 'bg-purple-500/10 border-purple-500/50' : 'bg-white/5 border-white/10'}`}
-                            >
-                                <View className="flex-row items-center gap-4">
-                                    <View className={`w-10 h-10 rounded-full items-center justify-center ${pack.popular ? 'bg-purple-500/20' : 'bg-white/10'}`}>
-                                        <Zap size={18} color={pack.popular ? '#c084fc' : 'white'} fill={pack.popular ? '#c084fc' : 'none'} />
-                                    </View>
-                                    <View>
-                                        <Text weight="bold" className="text-white text-lg">{pack.credits} Credits</Text>
-                                        {pack.popular && <Text weight="extrabold" className="text-purple-400 text-[10px] uppercase tracking-widest">Most Popular</Text>}
-                                    </View>
-                                </View>
-                                <Text weight="extrabold" className="text-white text-lg">${pack.price}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-
-                    <TouchableOpacity onPress={onClose} className="w-full h-14 items-center justify-center">
-                        <Text weight="bold" className="text-zinc-500">Cancel</Text>
-                    </TouchableOpacity>
                 </View>
             </View>
         </Modal>
