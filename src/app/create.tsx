@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, TextInput, TouchableOpacity, ScrollView, Platform, KeyboardAvoidingView, Switch, Pressable, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Calendar as CalendarIcon, Clock, Mic, Info, MapPin, FileText, Lock } from 'lucide-react-native';
+import { Calendar as CalendarIcon, Clock, Mic, Info, MapPin, FileText, Lock, Repeat2, ChevronDown, Check, X } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Theme } from '@/theme';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,12 +21,24 @@ const CATEGORIES = [
     { id: 'other', label: 'Other', color: '#71717a' },
 ];
 
+const REPEAT_OPTIONS = [
+    { id: 'never', label: 'Never' },
+    { id: 'daily', label: 'Daily' },
+    { id: 'weekly', label: 'Weekly' },
+    { id: 'monthly', label: 'Monthly' },
+    { id: 'yearly', label: 'Yearly' },
+] as const;
+
+type RepeatOption = typeof REPEAT_OPTIONS[number]['id'];
+
 export default function CreateReminderScreen() {
     const router = useRouter();
     const [title, setTitle] = useState('');
     const [notes, setNotes] = useState('');
     const [location, setLocation] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
+    const [repeatOption, setRepeatOption] = useState<RepeatOption>('never');
+    const [isRepeatPickerVisible, setIsRepeatPickerVisible] = useState(false);
     const [isProtected, setIsProtected] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
 
@@ -56,6 +68,7 @@ export default function CreateReminderScreen() {
     };
 
     const { createReminder, isSaving } = useReminders();
+    const selectedRepeatLabel = REPEAT_OPTIONS.find(option => option.id === repeatOption)?.label || 'Never';
 
     const handleCreate = async () => {
         if (!title.trim()) {
@@ -185,7 +198,7 @@ export default function CreateReminderScreen() {
 
                         {/* Date & Time */}
                         <View className="flex-row gap-3 mb-2">
-                            <View className="flex-1">
+                            <View className="w-[44%]">
                                 <Text className="text-[#52525c] mb-2.5 px-1 text-xs font-sans-extrabold tracking-widest uppercase">DATE</Text>
                                 <TouchableOpacity
                                     activeOpacity={0.8}
@@ -200,16 +213,32 @@ export default function CreateReminderScreen() {
                             </View>
                             <View className="flex-1">
                                 <Text className="text-[#52525c] mb-2.5 px-1 text-xs font-sans-extrabold tracking-widest uppercase">TIME</Text>
-                                <TouchableOpacity
-                                    activeOpacity={0.8}
-                                    onPress={() => showMode('time')}
-                                    className="bg-[#151518] border border-white/10 rounded-2xl h-14 flex-row items-center px-4 gap-3 active:bg-white/5"
-                                >
-                                    <Clock size={18} color="#71717a" />
-                                    <Text className="text-[#71717a] font-sans-bold text-[15px]">
-                                        {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </Text>
-                                </TouchableOpacity>
+                                <View className="bg-[#151518] border border-white/10 rounded-2xl h-14 flex-row items-center overflow-hidden">
+                                    <TouchableOpacity
+                                        activeOpacity={0.8}
+                                        onPress={() => showMode('time')}
+                                        className="flex-1 h-full flex-row items-center px-3 gap-2.5 active:bg-white/5"
+                                    >
+                                        <Clock size={18} color="#71717a" />
+                                        <Text className="text-white font-sans-bold text-[15px]" numberOfLines={1}>
+                                            {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </Text>
+                                    </TouchableOpacity>
+
+                                    <View className="w-[1px] h-7 bg-white/10" />
+
+                                    <TouchableOpacity
+                                        activeOpacity={0.8}
+                                        onPress={() => setIsRepeatPickerVisible(true)}
+                                        className="h-full flex-row items-center px-2.5 gap-1.5 active:bg-white/5"
+                                    >
+                                        <Repeat2 size={16} color={Theme.colors.accentPurple} />
+                                        <Text className="text-accent-purple font-sans-bold text-[14px]" numberOfLines={1}>
+                                            {selectedRepeatLabel}
+                                        </Text>
+                                        <ChevronDown size={14} color={Theme.colors.accentPurple} />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
                         </View>
 
@@ -291,7 +320,9 @@ export default function CreateReminderScreen() {
                             className="flex-row items-center gap-2 mt-2 mb-4 py-2"
                             activeOpacity={0.7}
                         >
-                            <Text className="text-[#52525c] font-sans-bold text-xs uppercase tracking-wide">+ ADD MORE DETAILS</Text>
+                            <Text className="text-[#52525c] font-sans-bold text-xs uppercase tracking-wide">
+                                {showDetails ? '- ADD MORE DETAILS' : '+ ADD MORE DETAILS'}
+                            </Text>
                         </TouchableOpacity>
 
                         {showDetails && (
@@ -383,6 +414,66 @@ export default function CreateReminderScreen() {
                             </LinearGradient>
                         </TouchableOpacity>
                     </View>
+
+                    <Modal
+                        visible={isRepeatPickerVisible}
+                        transparent
+                        animationType="fade"
+                        onRequestClose={() => setIsRepeatPickerVisible(false)}
+                    >
+                        <Pressable
+                            className="flex-1 bg-black/70 justify-end"
+                            onPress={() => setIsRepeatPickerVisible(false)}
+                        >
+                            <Pressable className="bg-[#151518] border border-white/10 rounded-t-[32px] px-6 pt-5 pb-10">
+                                <View className="flex-row items-start justify-between mb-5">
+                                    <View className="flex-1 pr-4">
+                                        <Text className="text-white text-xl font-sans-extrabold mb-1">Repeat</Text>
+                                        <Text className="text-[#71717a] text-sm font-sans-medium">
+                                            Choose how often this reminder repeats.
+                                        </Text>
+                                    </View>
+
+                                    <TouchableOpacity
+                                        activeOpacity={0.8}
+                                        onPress={() => setIsRepeatPickerVisible(false)}
+                                        className="w-10 h-10 rounded-full bg-white/5 border border-white/10 items-center justify-center active:bg-white/10"
+                                    >
+                                        <X size={18} color="#ffffff" />
+                                    </TouchableOpacity>
+                                </View>
+
+                                <View className="gap-2">
+                                    {REPEAT_OPTIONS.map(option => {
+                                        const isSelected = option.id === repeatOption;
+
+                                        return (
+                                            <TouchableOpacity
+                                                key={option.id}
+                                                activeOpacity={0.8}
+                                                onPress={() => {
+                                                    setRepeatOption(option.id);
+                                                    setIsRepeatPickerVisible(false);
+                                                }}
+                                                className={`h-14 rounded-2xl border flex-row items-center justify-between px-4 ${isSelected ? 'bg-accent-purple/10 border-accent-purple/40' : 'bg-[#202022] border-white/5'}`}
+                                            >
+                                                <View className="flex-row items-center gap-3">
+                                                    <Repeat2 size={18} color={isSelected ? Theme.colors.accentPurple : '#71717a'} />
+                                                    <Text className={`font-sans-bold text-base ${isSelected ? 'text-accent-purple' : 'text-white'}`}>
+                                                        {option.label}
+                                                    </Text>
+                                                </View>
+
+                                                {isSelected && (
+                                                    <Check size={18} color={Theme.colors.accentPurple} />
+                                                )}
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </Pressable>
+                        </Pressable>
+                    </Modal>
 
                 </KeyboardAvoidingView>
             </SafeAreaView>
