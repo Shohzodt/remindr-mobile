@@ -75,7 +75,7 @@ export interface LinkTelegramPayload {
 }
 
 
-export type Plan = 'Free' | 'Pro' | 'Premium';
+export type Plan = 'free' | 'pro' | 'Free' | 'Pro';
 
 export interface PaymentMethod {
     last4: string;

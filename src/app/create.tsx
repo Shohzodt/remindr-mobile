@@ -13,6 +13,7 @@ import { LocationInput } from '@/components/LocationInput';
 import { Alert, ActivityIndicator } from 'react-native';
 import { ReminderStatus, ReminderSource, ReminderPriority } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import { isProPlan } from '@/utils/plan';
 
 // Mock Categories
 const CATEGORIES = [
@@ -71,8 +72,10 @@ export default function CreateReminderScreen() {
 
     const { createReminder, isSaving } = useReminders();
     const selectedRepeatLabel = REPEAT_OPTIONS.find(option => option.id === repeatOption)?.label || 'Never';
+    const isProUser = isProPlan(user?.plan);
+    const canUseRecurring = isProUser;
     const hasRepeatSelected = repeatOption !== 'never';
-    const isGuardianAllowed = user?.plan === 'Pro' || user?.plan === 'Premium';
+    const isGuardianAllowed = isProUser;
     const hasDeadline = date instanceof Date && !Number.isNaN(date.getTime());
 
     const handleGuardianToggle = (nextValue: boolean) => {
@@ -257,12 +260,13 @@ export default function CreateReminderScreen() {
                                     <View className="w-[1px] h-7 bg-white/10" />
 
                                     <TouchableOpacity
-                                        activeOpacity={0.8}
+                                        activeOpacity={canUseRecurring ? 0.8 : 1}
+                                        disabled={!canUseRecurring}
                                         onPress={() => setIsRepeatPickerVisible(true)}
-                                        className="h-full w-12 items-center justify-center active:bg-white/5"
+                                        className={`h-full w-12 items-center justify-center ${canUseRecurring ? 'active:bg-white/5' : 'opacity-35'}`}
                                     >
-                                        <Repeat2 size={16} color={Theme.colors.accentPurple} />
-                                        {hasRepeatSelected && (
+                                        <Repeat2 size={16} color={canUseRecurring ? Theme.colors.accentPurple : '#52525b'} />
+                                        {canUseRecurring && hasRepeatSelected && (
                                             <View className="absolute top-2 right-2 w-4 h-4 rounded-full bg-accent-purple items-center justify-center">
                                                 <Check size={10} color="#ffffff" strokeWidth={3} />
                                             </View>

@@ -14,11 +14,13 @@ import { LargeSettingsItem } from '@/components/LargeSettingsItem';
 import { PlanCard } from '@/components/PlanCard';
 import { useAuth } from '@/context/AuthContext';
 import { Layout } from '@/constants/layout';
+import { getPlanDisplayName } from '@/utils/plan';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const currentPlan = getPlanDisplayName(user?.plan);
 
   return (
     <View className="flex-1 bg-bg-primary">
@@ -71,7 +73,10 @@ export default function SettingsScreen() {
         </View>
 
         {/* PlanCard */}
-        <PlanCard onPress={() => router.push('/settings/plans-billing')} />
+        <PlanCard
+          planName={currentPlan}
+          onPress={() => router.push('/settings/plans-billing')}
+        />
 
         {/* Account Settings */}
         <View>

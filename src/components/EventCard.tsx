@@ -17,6 +17,7 @@ import {
   AlertOctagon
 } from 'lucide-react-native';
 import { getDisplayText } from '@/utils/displayText';
+import { isProPlan, normalizePlan } from '@/utils/plan';
 
 interface EventCardProps {
   item: Reminder | any; // 'any' allows for the mock data fields like 'risk' or 'color' which might be loosely typed
@@ -37,10 +38,8 @@ export const EventCard = ({
   onClick,
   onToggle
 }: EventCardProps) => {
-  const isPremium = userPlan === 'Premium';
-
   // For mobile, we might want to simplify logic or keep it 1:1. Keeping 1:1 for fidelity.
-  const isFree = userPlan === 'Free';
+  const isFree = normalizePlan(userPlan) === 'free';
 
   const isProtected = type === 'protected' || item.isProtected || item.isGuardian;
   const isRisk = type === 'risk';
@@ -57,7 +56,7 @@ export const EventCard = ({
   const hasFutureImpact = item.decisionControl?.futureImpact?.enabled ?? false;
 
   const showUrgency = !isFree;
-  const showAI = isPremium;
+  const showAI = isProPlan(userPlan);
   const insight = getDisplayText(item.insight || item.aiInsight);
   const guardianInsight = isProtected
     ? getDisplayText(item.guardianInsight || item.aiInsight || item.insight, 'AI: Reminder Guardian is keeping this deadline prioritized.')

@@ -14,9 +14,11 @@ import { Calendar as CalendarIcon, Plus } from 'lucide-react-native';
 import { Layout } from "@/constants/layout";
 import { useReminders } from '@/hooks/useReminders';
 import { isPastReminder } from '@/utils/reminderTime';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CalendarScreen() {
     const router = useRouter();
+    const { user } = useAuth();
     const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [viewDate, setViewDate] = useState(new Date()); // For grid navigation
     const [isGridVisible, setIsGridVisible] = useState(false);
@@ -39,8 +41,7 @@ export default function CalendarScreen() {
 
     const { top: insetsTop } = useSafeAreaInsets();
 
-    // Mock user plan for EventCard reuse
-    const userPlan = 'Premium';
+    const userPlan = user?.plan || 'free';
 
     // Calculate dots for CalendarStrip based on all reminders
     const dots = reminders.reduce((acc, reminder) => {

@@ -169,6 +169,7 @@ export default function TimelineScreen() {
                     message="No protected reminders"
                     subtext="Reminder Guardian has no reminders to show right now."
                     icon={<Shield size={32} color="#52525b" />}
+                    compact
                   />
                 )}
               </View>

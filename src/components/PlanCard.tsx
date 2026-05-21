@@ -6,9 +6,16 @@ import { Text } from './ui/Text';
 
 interface PlanCardProps {
     onPress?: () => void;
+    planName?: string;
 }
 
-export const PlanCard = ({ onPress }: PlanCardProps) => {
+export const PlanCard = ({ onPress, planName = 'Free' }: PlanCardProps) => {
+    const isPro = planName === 'Pro';
+    const badgeLabel = isPro ? 'ACTIVE' : 'FREE';
+    const subtitle = isPro
+        ? 'Reminder Guardian and Pro tools are active.'
+        : 'Upgrade to Pro for Reminder Guardian and AI tools.';
+
     return (
         <TouchableOpacity activeOpacity={0.9} className="mb-8" onPress={onPress}>
             <View className="w-full rounded-[32px] border border-white/5 p-6 relative h-[120px] bg-[#171520] flex-row items-center justify-between">
@@ -25,17 +32,17 @@ export const PlanCard = ({ onPress }: PlanCardProps) => {
 
                     <View className="flex-row items-center gap-2 mb-2">
                         <Text variant="h3" weight="extrabold" className="text-white text-3xl">
-                            Free
+                            {planName}
                         </Text>
                         <View className="bg-white/10 px-2 py-1 rounded-md">
                             <Text variant="micro" className="text-white/80 text-[8px] tracking-widest">
-                                STARTER
+                                {badgeLabel}
                             </Text>
                         </View>
                     </View>
 
                     <Text variant="caption" weight="medium" className="text-text-muted text-[12px] opacity-60">
-                        Upgrade to unlock AI scanning & protection
+                        {subtitle}
                     </Text>
                 </View>
 

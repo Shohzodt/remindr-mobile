@@ -12,6 +12,8 @@ import {
 import { Layout } from "@/constants/layout";
 import { Text } from '@/components/ui/Text';
 import { useBillingMock } from '@/hooks/useBillingMock';
+import { useAuth } from '@/context/AuthContext';
+import { getPlanDisplayName } from '@/utils/plan';
 
 type PlanId = 'free' | 'pro';
 
@@ -32,8 +34,8 @@ interface PlanConfig {
 export default function PlansBillingScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { user } = useAuth();
     const {
-        userPlan,
         paymentMethod,
         handlePlanChange,
         handleAddPayment,
@@ -42,7 +44,7 @@ export default function PlansBillingScreen() {
 
     const [showConfirmRemoveCard, setShowConfirmRemoveCard] = useState(false);
 
-    const currentPlan: 'Free' | 'Pro' = userPlan === 'Free' ? 'Free' : 'Pro';
+    const currentPlan = getPlanDisplayName(user?.plan);
     const hasCard = !!paymentMethod;
     const canRemoveCard = currentPlan === 'Free' && hasCard;
 
