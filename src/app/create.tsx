@@ -14,6 +14,7 @@ import { Alert, ActivityIndicator } from 'react-native';
 import { ReminderStatus, ReminderSource, ReminderPriority } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { isProPlan } from '@/utils/plan';
+import { DocumentAiSheet, DocAiDetectedDeadline } from '@/components/DocumentAiSheet';
 
 // Mock Categories
 const CATEGORIES = [
@@ -43,6 +44,7 @@ export default function CreateReminderScreen() {
     const [repeatOption, setRepeatOption] = useState<RepeatOption>('never');
     const [isRepeatPickerVisible, setIsRepeatPickerVisible] = useState(false);
     const [isProtected, setIsProtected] = useState(false);
+    const [isDocAiVisible, setIsDocAiVisible] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
 
     const [isFocused, setIsFocused] = useState(false);
@@ -77,6 +79,27 @@ export default function CreateReminderScreen() {
     const hasRepeatSelected = repeatOption !== 'never';
     const isGuardianAllowed = isProUser;
     const hasDeadline = date instanceof Date && !Number.isNaN(date.getTime());
+
+    const handleDocAiPress = () => {
+        if (!isProUser) {
+            router.push('/settings/plans-billing');
+            return;
+        }
+
+        setIsDocAiVisible(true);
+    };
+
+    const handleCreateFromDocAi = (deadline: DocAiDetectedDeadline, sourceFileName: string) => {
+        const detectedDate = new Date(`${deadline.date}T10:00:00`);
+
+        setTitle(deadline.title);
+        setNotes(`Doc AI: ${deadline.quote}\n\nSource: ${sourceFileName}`);
+        setLocation('');
+        setSelectedCategory('work');
+        setDate(detectedDate);
+        setShowDetails(true);
+        setIsDocAiVisible(false);
+    };
 
     const handleGuardianToggle = (nextValue: boolean) => {
         if (!isGuardianAllowed) {
@@ -160,7 +183,7 @@ export default function CreateReminderScreen() {
                                 <Text variant="h2" weight="extrabold" className="text-[32px] text-white" style={{ letterSpacing: -2, lineHeight: 34 }}>New Reminder</Text>
                                 <TouchableOpacity
                                     className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-xl border border-accent-purple/30 bg-accent-purple/5 active:bg-accent-purple/10"
-                                    onPress={() => console.log('Doc AI clicked')}
+                                    onPress={handleDocAiPress}
                                 >
                                     <FileText size={12} color={Theme.colors.accentPurple} strokeWidth={2.5} />
                                     <Text className="text-xs font-sans-extrabold text-accent-purple uppercase tracking-widest">DOC AI</Text>
@@ -523,6 +546,12 @@ export default function CreateReminderScreen() {
                             </Pressable>
                         </Pressable>
                     </Modal>
+
+                    <DocumentAiSheet
+                        visible={isDocAiVisible}
+                        onClose={() => setIsDocAiVisible(false)}
+                        onCreateReminder={handleCreateFromDocAi}
+                    />
 
                 </KeyboardAvoidingView>
             </SafeAreaView>

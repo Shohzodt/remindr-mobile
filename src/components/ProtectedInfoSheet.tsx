@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlertOctagon, AlertTriangle, CheckCircle2, Info, ShieldCheck, X, Zap } from 'lucide-react-native';
 import { Reminder } from '@/types';
@@ -116,8 +116,8 @@ export const ProtectedInfoSheet = ({ visible, reminder, onClose }: ProtectedInfo
                 <Pressable className="absolute inset-0 bg-black/80" onPress={onClose} />
 
                 <View
-                    className="relative max-h-[88%] rounded-t-[34px] border border-white/10 bg-[#111114] px-6 pt-6"
-                    style={{ paddingBottom: Math.max(insets.bottom, 20) }}
+                    className="relative rounded-t-[34px] border border-white/10 bg-[#111114] px-6 pt-6"
+                    style={{ height: '88%', paddingBottom: Math.max(insets.bottom, 20) }}
                 >
                     <View className="mb-6 flex-row items-start justify-between gap-4">
                         <View className="flex-1">
@@ -147,14 +147,19 @@ export const ProtectedInfoSheet = ({ visible, reminder, onClose }: ProtectedInfo
                         </TouchableOpacity>
                     </View>
 
-                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>
-                        {isLoading ? (
-                            <View className="mb-8 rounded-[28px] border border-white/5 bg-white/[0.03] p-5">
-                                <Text variant="caption" className="text-text-muted">
-                                    Loading Guardian details...
-                                </Text>
+                    {isLoading ? (
+                        <View className="flex-1 items-center justify-center">
+                            <View className="items-center justify-center rounded-[28px] p-5">
+                                <ActivityIndicator color="#A855F7" size="large" />
                             </View>
-                        ) : error ? (
+                        </View>
+                    ) : (
+                        <ScrollView
+                            style={{ flex: 1 }}
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={{ paddingBottom: 8 }}
+                        >
+                            {error ? (
                             <View className="mb-8 rounded-[28px] border border-red-500/10 bg-red-500/5 p-5">
                                 <View className="flex-row items-center gap-3">
                                     <AlertOctagon size={16} color="#F87171" />
@@ -240,7 +245,8 @@ export const ProtectedInfoSheet = ({ visible, reminder, onClose }: ProtectedInfo
                                 )}
                             </View>
                         )}
-                    </ScrollView>
+                        </ScrollView>
+                    )}
                 </View>
             </View>
         </Modal>

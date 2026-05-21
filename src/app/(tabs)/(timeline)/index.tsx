@@ -7,6 +7,7 @@ import { EventCard } from '@/components/EventCard';
 import { EmptyState } from '@/components/EmptyState';
 import { ProtectedInfoSheet } from '@/components/ProtectedInfoSheet';
 import { useAuth } from '@/context/AuthContext';
+import { useUnreadCount } from '@/hooks/useNotifications';
 import { useGuardianReminders, useReminders } from '@/hooks/useReminders';
 import { Bell, CheckCircle, Shield } from 'lucide-react-native';
 import { Layout } from "@/constants/layout";
@@ -26,6 +27,7 @@ export default function TimelineScreen() {
     error: guardianError,
     refetch: refetchGuardian,
   } = useGuardianReminders();
+  const { count: unreadNotificationCount, refetch: refetchUnreadCount } = useUnreadCount();
   const reminders = apiReminders;
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [selectedProtectedReminder, setSelectedProtectedReminder] = React.useState<Reminder | null>(null);
@@ -33,7 +35,7 @@ export default function TimelineScreen() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchGuardian()]);
+      await Promise.all([refetch(), refetchGuardian(), refetchUnreadCount()]);
     } finally {
       setIsRefreshing(false);
     }
@@ -100,7 +102,9 @@ export default function TimelineScreen() {
                   onPress={() => router.push('/notifications')}
                   className="w-10 h-10 rounded-full border border-white/20 bg-zinc-900 items-center justify-center border border-white/5 active:bg-zinc-800 relative"
                 >
-                  <View className="absolute top-2.5 right-3 w-2 h-2 rounded-full bg-accent-purple border border-[#151518] z-10" />
+                  {unreadNotificationCount > 0 && (
+                    <View className="absolute top-2.5 right-3 w-2 h-2 rounded-full bg-accent-purple border border-[#151518] z-10" />
+                  )}
                   <Bell size={20} color="#ffffff" />
                 </TouchableOpacity>
 
