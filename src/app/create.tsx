@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, TextInput, TouchableOpacity, ScrollView, Platform, KeyboardAvoidingView, Switch, Pressable, Modal } from 'react-native';
+import { View, TextInput, TouchableOpacity, ScrollView, Platform, KeyboardAvoidingView, Switch, Pressable, Modal, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Calendar as CalendarIcon, Clock, Mic, Info, MapPin, FileText, Lock, Repeat2, ChevronDown, Check, X } from 'lucide-react-native';
@@ -81,6 +81,8 @@ export default function CreateReminderScreen() {
     const hasDeadline = date instanceof Date && !Number.isNaN(date.getTime());
 
     const handleDocAiPress = () => {
+        Keyboard.dismiss();
+
         if (!isProUser) {
             router.push('/settings/plans-billing');
             return;
@@ -175,7 +177,12 @@ export default function CreateReminderScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     className="flex-1"
                 >
-                    <ScrollView style={{ paddingTop: insets.top }} className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        style={{ paddingTop: insets.top }}
+                        className="flex-1 px-5"
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                    >
 
                         {/* Header */}
                         <View className="flex-column justify-between mb-8">

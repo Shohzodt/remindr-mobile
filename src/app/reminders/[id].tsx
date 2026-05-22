@@ -23,6 +23,8 @@ export default function ReminderDetailsScreen() {
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     const handleFixTiming = () => {
+        if (reminder?.isProtected) return;
+
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
 
         fixTimingMutation.reset();
@@ -97,8 +99,10 @@ export default function ReminderDetailsScreen() {
     }
 
     const isCompleted = reminder.status === 'completed';
+    const isProtected = reminder.isProtected === true;
     const reminderDate = new Date(`${reminder.date}T${reminder.time}:00`);
     const isPast = reminderDate < new Date();
+    const canFixTiming = isPast && !isCompleted && !isProtected;
     const fixTimingError = (fixTimingMutation.error as any)?.response?.data?.message
         || (fixTimingMutation.error as any)?.message
         || null;
@@ -159,7 +163,8 @@ export default function ReminderDetailsScreen() {
                             <SmartTimingSection 
                                 time={reminder.time} 
                                 date={reminder.date} 
-                                canFixTiming={isPast && !isCompleted}
+                                canFixTiming={canFixTiming}
+                                disabledReason={isProtected ? "Guardian is active. This deadline can't be moved automatically." : null}
                                 decision={fixTimingMutation.data}
                                 errorMessage={fixTimingError}
                                 fixCount={reminder.fixCount}

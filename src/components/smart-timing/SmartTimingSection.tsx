@@ -10,6 +10,7 @@ interface SmartTimingSectionProps {
     time: string;
     date: string;
     canFixTiming?: boolean;
+    disabledReason?: string | null;
     decision?: FixTimingResponse;
     errorMessage?: string | null;
     fixCount?: number;
@@ -32,6 +33,7 @@ export function SmartTimingSection({
     time,
     date,
     canFixTiming,
+    disabledReason,
     decision,
     errorMessage,
     fixCount,
@@ -60,6 +62,12 @@ export function SmartTimingSection({
                 <TouchableOpacity onPress={onFixTiming} className="mt-2 flex-row items-center active:opacity-70">
                     <Text className="text-green-400 font-sans-bold">Fix timing</Text>
                 </TouchableOpacity>
+            )}
+
+            {!canFixTiming && disabledReason && !decision && !isFixing && (
+                <Text className="text-zinc-500 text-sm font-sans-medium mt-2 leading-5">
+                    {disabledReason}
+                </Text>
             )}
 
             {isFixing && (
@@ -95,7 +103,7 @@ export function SmartTimingSection({
                 </Animated.View>
             )}
 
-            {hasSeveralFixes && (
+            {hasSeveralFixes && !disabledReason && (
                 <View className="mt-3 bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 rounded-xl flex-row items-center gap-2.5 self-start">
                     <AlertTriangle size={14} color="#f59e0b" />
                     <Text className="text-amber-500/90 text-xs font-sans-medium">Delayed several times</Text>
