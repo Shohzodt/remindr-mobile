@@ -137,10 +137,11 @@ export function useReminder(id?: string) {
     });
 }
 
-export function useGuardianReminders() {
+export function useGuardianReminders(enabled = true) {
     return useQuery({
         queryKey: [...REMINDERS_QUERY_KEY, 'guardian'],
         queryFn: () => RemindersService.getGuardianTimeline(),
+        enabled,
     });
 }
 

@@ -15,10 +15,13 @@ import { RefreshControl } from 'react-native';
 import { formatGuardianDueLabel, isPastReminder } from '@/utils/reminderTime';
 import { getDisplayText } from '@/utils/displayText';
 import { Reminder } from '@/types';
+import { isProPlan } from '@/utils/plan';
 
 export default function TimelineScreen() {
   const router = useRouter();
   const { user } = useAuth(); // Assuming useAuth provides user object
+  const userPlan = user?.plan || 'free';
+  const canUseGuardian = isProPlan(userPlan);
   // Use Real Hook
   const { reminders: apiReminders, isLoading, refetch } = useReminders();
   const {
@@ -26,7 +29,7 @@ export default function TimelineScreen() {
     isLoading: isGuardianLoading,
     error: guardianError,
     refetch: refetchGuardian,
-  } = useGuardianReminders();
+  } = useGuardianReminders(canUseGuardian);
   const { count: unreadNotificationCount, refetch: refetchUnreadCount } = useUnreadCount();
   const reminders = apiReminders;
   const [isRefreshing, setIsRefreshing] = React.useState(false);
@@ -35,16 +38,19 @@ export default function TimelineScreen() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchGuardian(), refetchUnreadCount()]);
+      await Promise.all([
+        refetch(),
+        canUseGuardian ? refetchGuardian() : Promise.resolve(),
+        refetchUnreadCount(),
+      ]);
     } finally {
       setIsRefreshing(false);
     }
   };
 
   // Logic from Web
-  const userPlan = user?.plan || 'Free';
   const guardianItems = guardianTimeline?.items || [];
-  const isGuardianLocked = Boolean(guardianTimeline?.locked);
+  const isGuardianLocked = !canUseGuardian || Boolean(guardianTimeline?.locked);
   const guardianUpsellTitle = getDisplayText(guardianTimeline?.upsellTitle, 'Reminder Guardian');
   const guardianUpsellSummary = getDisplayText(guardianTimeline?.upsellSummary || guardianTimeline?.summary, 'Upgrade to Pro to unlock Reminder Guardian.');
   const guardianCtaLabel = getDisplayText(guardianTimeline?.ctaLabel, 'Upgrade to Pro');
