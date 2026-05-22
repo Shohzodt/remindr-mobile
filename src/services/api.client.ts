@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { HttpStatusCode } from '@/constants/http';
+import { isAuthFailureStatus } from '@/utils/http';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -38,7 +40,7 @@ apiClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === HttpStatusCode.UNAUTHORIZED && !originalRequest._retry) {
             // Avoid infinite loop if the refresh endpoint itself fails
             if (originalRequest.url?.includes('/auth/refresh')) {
                 return Promise.reject(error);
@@ -95,11 +97,14 @@ apiClient.interceptors.response.use(
                 // Refresh failed
                 processQueue(refreshError, null);
 
-                const { TokenStorage } = await import('./storage');
-                const { authEvents } = await import('./auth.events');
+                const status = (refreshError as any)?.response?.status;
+                if (isAuthFailureStatus(status)) {
+                    const { TokenStorage } = await import('./storage');
+                    const { authEvents } = await import('./auth.events');
 
-                await TokenStorage.clearTokens();
-                authEvents.triggerLogout();
+                    await TokenStorage.clearTokens();
+                    authEvents.triggerLogout();
+                }
 
                 return Promise.reject(refreshError);
             } finally {

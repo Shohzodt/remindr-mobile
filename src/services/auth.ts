@@ -1,5 +1,6 @@
 import { apiClient } from './api.client';
 import { TokenStorage } from './storage';
+import { isAuthFailureStatus } from '@/utils/http';
 import { User, AuthResponse, UpdateProfilePayload, LinkEmailPayload, LinkTelegramPayload } from '@/types';
 
 const normalizeUser = (data: any): User | null => {
@@ -70,16 +71,22 @@ export const AuthService = {
             await TokenStorage.setTokens(newAccessToken, newRefreshToken || refreshToken);
 
             return newAccessToken;
-        } catch (error) {
-            // If refresh fails, we should probably logout
-            await TokenStorage.clearTokens();
-            return null;
+        } catch (error: any) {
+            const status = error.response?.status;
+            if (isAuthFailureStatus(status)) {
+                await TokenStorage.clearTokens();
+                return null;
+            }
+            throw error;
         }
     },
 
     async logout(): Promise<void> {
         try {
-            await apiClient.post('/auth/logout');
+            const refreshToken = await TokenStorage.getRefreshToken();
+            if (refreshToken) {
+                await apiClient.post('/auth/logout', { refreshToken });
+            }
         } catch (error: any) {
             // Ignore logout API errors - we still want to clear local tokens
             console.warn('Logout API failed (session may already be invalid):', error.response?.status);

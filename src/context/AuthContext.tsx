@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { TokenStorage } from '../services/storage';
 import { AuthService } from '../services/auth';
 import { authEvents } from '../services/auth.events';
+import { isAuthFailureStatus } from '@/utils/http';
 
 import { User } from '@/types';
 
@@ -30,31 +31,61 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const clearLocalSession = async () => {
+    await TokenStorage.clearTokens();
+    setIsAuthenticated(false);
+    setUser(null);
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = await TokenStorage.getAccessToken();
-        if (token) {
-          // Validate token and get user profile
+        const accessToken = await TokenStorage.getAccessToken();
+        const refreshToken = await TokenStorage.getRefreshToken();
+
+        if (!accessToken && !refreshToken) {
+          setIsAuthenticated(false);
+          setUser(null);
+          return;
+        }
+
+        if (!accessToken && refreshToken) {
+          const restoredAccessToken = await AuthService.refreshAccessToken();
+          if (!restoredAccessToken) {
+            await clearLocalSession();
+            return;
+          }
+        }
+
+        try {
           const userProfile = await AuthService.getProfile();
           if (!userProfile || !userProfile.id) {
             console.warn('Invalid stored session, logging out.');
-            await TokenStorage.clearTokens();
-            setIsAuthenticated(false);
-            setUser(null);
+            await clearLocalSession();
             return;
           }
           setUser(userProfile);
           setIsAuthenticated(true);
+        } catch (profileError: any) {
+          const status = profileError.response?.status;
+          if (isAuthFailureStatus(status)) {
+            await clearLocalSession();
+            return;
+          }
+
+          console.warn('Auth check could not verify profile, keeping stored tokens:', profileError?.message || profileError);
+          setIsAuthenticated(false);
+          setUser(null);
         }
       } catch (error: any) {
-        if (error.response?.status !== 401) {
-          console.warn('Auth check failed, logging out:', error?.message || error);
-        } else {
+        const status = error.response?.status;
+        if (isAuthFailureStatus(status)) {
           console.log('Session expired or invalid, logging out.');
+          await clearLocalSession();
+          return;
         }
-        // If profile fetch fails, token might be invalid
-        await TokenStorage.clearTokens();
+
+        console.warn('Auth check failed, keeping stored tokens:', error?.message || error);
         setIsAuthenticated(false);
         setUser(null);
       } finally {
@@ -66,7 +97,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Subscribe to global logout events (from api interceptor)
     const unsubscribe = authEvents.subscribe(() => {
-      logout();
+      clearLocalSession();
     });
 
     return () => {

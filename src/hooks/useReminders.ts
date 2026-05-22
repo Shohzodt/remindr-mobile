@@ -3,6 +3,7 @@ import { NotificationService } from '@/services/notifications.service';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
+import { HttpStatusCode } from '@/constants/http';
 
 export const REMINDERS_QUERY_KEY = ['reminders'];
 
@@ -47,7 +48,7 @@ export function useReminders() {
                 payload: err.config?.data,
             });
 
-            if (err.response?.status === 403) {
+            if (err.response?.status === HttpStatusCode.FORBIDDEN) {
                 Alert.alert('Reminder Guardian', 'Reminder Guardian is a Pro feature.');
             } else if (typeof errorText === 'string' && errorText.toLowerCase().includes('deadlineat')) {
                 Alert.alert('Reminder Guardian', 'Set a deadline first to use Reminder Guardian.');

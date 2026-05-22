@@ -67,21 +67,6 @@ const getStatusConfig = (status?: GuardianStatusTone) => {
     }
 };
 
-const getGuardianErrorMessage = (error: any) => {
-    if (error?.response?.status === 403) {
-        return 'Reminder Guardian is a Pro feature.';
-    }
-
-    const message = error?.response?.data?.message;
-    const text = Array.isArray(message) ? message.join(' ') : message;
-
-    if (typeof text === 'string' && text.toLowerCase().includes('deadlineat')) {
-        return 'Set a deadline first to use Reminder Guardian.';
-    }
-
-    return 'We could not load Guardian details right now.';
-};
-
 export const ProtectedInfoSheet = ({ visible, reminder, onClose }: ProtectedInfoSheetProps) => {
     const insets = useSafeAreaInsets();
     const {
@@ -103,7 +88,6 @@ export const ProtectedInfoSheet = ({ visible, reminder, onClose }: ProtectedInfo
     const contextConfig = getStatusConfig(guardianDetail?.context?.status || 'warning');
     const contextTitle = guardianDetail?.context?.title;
     const contextDescription = guardianDetail?.context?.description;
-    const errorMessage = getGuardianErrorMessage(error);
 
     return (
         <Modal
@@ -164,7 +148,7 @@ export const ProtectedInfoSheet = ({ visible, reminder, onClose }: ProtectedInfo
                                 <View className="flex-row items-center gap-3">
                                     <AlertOctagon size={16} color="#F87171" />
                                     <Text variant="caption" className="flex-1 text-red-300">
-                                        {errorMessage}
+                                        We could not load Guardian details right now.
                                     </Text>
                                 </View>
                             </View>
