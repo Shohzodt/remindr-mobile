@@ -86,6 +86,7 @@ const CATEGORIES = ['Recommended', 'Tech', 'Music', 'Sports', 'Art', 'Food'];
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.82;
 const CARD_GAP = 14;
+const SHOW_DISCOVER_CONTENT = false;
 
 // ─── Featured Card ──────────────────────────────────────────────────
 function FeaturedCard({ item }: { item: EventItem }) {
@@ -333,6 +334,16 @@ export default function DiscoverScreen() {
         Haptics.selectionAsync();
         setActiveCategory(index);
     };
+
+    if (!SHOW_DISCOVER_CONTENT) {
+        return (
+            <View className="flex-1 items-center justify-center bg-black px-8">
+                <Text className="text-center text-white text-2xl font-sans-extrabold">
+                    Coming soon...
+                </Text>
+            </View>
+        );
+    }
 
     return (
         <View className="flex-1 bg-bg-primary">
