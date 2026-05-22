@@ -77,12 +77,6 @@ export interface LinkTelegramPayload {
 
 export type Plan = 'free' | 'pro' | 'Free' | 'Pro';
 
-export interface PaymentMethod {
-    last4: string;
-    expiry: string;
-    brand: string;
-}
-
 export interface SubscriptionMetadata {
     isCancelled: boolean;
     billingPeriodEnd: string;

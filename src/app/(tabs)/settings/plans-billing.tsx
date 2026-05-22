@@ -1,17 +1,14 @@
-import React, { useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import React from 'react';
+import { View, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
     ArrowLeft,
-    CreditCard,
-    Plus,
     Check,
 } from 'lucide-react-native';
 
 import { Layout } from "@/constants/layout";
 import { Text } from '@/components/ui/Text';
-import { useBillingMock } from '@/hooks/useBillingMock';
 import { useAuth } from '@/context/AuthContext';
 import { getPlanDisplayName } from '@/utils/plan';
 
@@ -35,18 +32,8 @@ export default function PlansBillingScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { user } = useAuth();
-    const {
-        paymentMethod,
-        handlePlanChange,
-        handleAddPayment,
-        handleRemovePayment,
-    } = useBillingMock();
-
-    const [showConfirmRemoveCard, setShowConfirmRemoveCard] = useState(false);
 
     const currentPlan = getPlanDisplayName(user?.plan);
-    const hasCard = !!paymentMethod;
-    const canRemoveCard = currentPlan === 'Free' && hasCard;
 
     const plans: PlanConfig[] = [
         {
@@ -110,56 +97,6 @@ export default function PlansBillingScreen() {
                     </Text>
                 </View>
 
-                {/* Payment Method */}
-                <View className="mb-12">
-                    <Text variant="micro" className="text-zinc-600 uppercase tracking-[0.2em] px-2 mb-4 text-[10px]">Payment Method</Text>
-
-                    {hasCard ? (
-                        <View className="gap-4">
-                            <View className="bg-[#121217] rounded-[28px] border border-white/5 p-6 flex-row items-center justify-between">
-                                <View className="flex-row items-center gap-4">
-                                    <View className="w-12 h-10 bg-white/5 rounded-xl items-center justify-center">
-                                        <CreditCard size={20} color="#a1a1aa" />
-                                    </View>
-                                    <View>
-                                        <Text weight="bold" className="text-white text-sm">•••• {paymentMethod?.last4}</Text>
-                                        <Text variant="micro" className="text-zinc-500 uppercase tracking-widest mt-0.5 text-[10px]">Expires {paymentMethod?.expiry}</Text>
-                                    </View>
-                                </View>
-                                <View className="bg-zinc-900/50 px-3 py-1.5 rounded-lg border border-white/5">
-                                    <Text variant="micro" className="text-zinc-600 uppercase tracking-widest text-[9px]">Primary</Text>
-                                </View>
-                            </View>
-
-                            <TouchableOpacity
-                                onPress={() => canRemoveCard ? setShowConfirmRemoveCard(true) : null}
-                                activeOpacity={canRemoveCard ? 0.7 : 1}
-                                className={`w-full py-4 rounded-2xl border border-dashed items-center ${canRemoveCard
-                                    ? 'border-white/10 active:scale-95'
-                                    : 'border-transparent opacity-50'
-                                    }`}
-                            >
-                                <Text variant="micro" className={`uppercase tracking-widest text-[10px] ${canRemoveCard ? 'text-zinc-500' : 'text-zinc-800'}`}>
-                                    {canRemoveCard ? 'Remove card' : 'Cannot remove card while active'}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    ) : (
-                        <TouchableOpacity
-                            onPress={handleAddPayment}
-                            className="w-full bg-[#121217] border border-dashed border-white/10 rounded-[28px] p-8 items-center justify-center gap-3 active:scale-[0.98]"
-                        >
-                            <View className="w-12 h-12 rounded-full bg-white/5 items-center justify-center">
-                                <Plus size={24} color="#52525b" />
-                            </View>
-                            <View className="items-center">
-                                <Text variant="micro" className="text-zinc-500 uppercase tracking-widest mb-1 text-[11px]">Add payment method</Text>
-                                <Text variant="micro" className="text-zinc-700 font-bold uppercase tracking-widest text-[9px]">Provider-hosted secure flow</Text>
-                            </View>
-                        </TouchableOpacity>
-                    )}
-                </View>
-
                 {/* Available Plans */}
                 <View className="gap-6">
                     <Text variant="micro" className="text-zinc-600 uppercase tracking-[0.2em] px-2 text-[10px]">Available Plans</Text>
@@ -168,27 +105,15 @@ export default function PlansBillingScreen() {
                         <PlanCard
                             key={plan.id}
                             plan={plan}
-                            onUpgrade={() => handlePlanChange('Pro')}
                         />
                     ))}
                 </View>
             </ScrollView>
-
-            <ConfirmationModal
-                visible={showConfirmRemoveCard}
-                title="Remove Card?"
-                message="Are you sure you want to remove this payment method? This action is permanent."
-                confirmText="Remove Card"
-                cancelText="Keep Card"
-                onConfirm={() => { handleRemovePayment(); setShowConfirmRemoveCard(false); }}
-                onCancel={() => setShowConfirmRemoveCard(false)}
-                isDestructive
-            />
         </View>
     );
 }
 
-function PlanCard({ plan, onUpgrade }: { plan: PlanConfig; onUpgrade: () => void }) {
+function PlanCard({ plan }: { plan: PlanConfig }) {
     const isPro = plan.id === 'pro';
 
     return (
@@ -240,54 +165,6 @@ function PlanCard({ plan, onUpgrade }: { plan: PlanConfig; onUpgrade: () => void
                 ))}
             </View>
 
-            {isPro && !plan.isCurrent && (
-                <TouchableOpacity
-                    onPress={onUpgrade}
-                    activeOpacity={0.9}
-                    className="w-full h-14 bg-white rounded-2xl shadow-lg items-center justify-center active:scale-[0.98]"
-                >
-                    <Text weight="extrabold" className="text-black text-sm">
-                        Upgrade to Pro
-                    </Text>
-                </TouchableOpacity>
-            )}
         </View>
-    );
-}
-
-function ConfirmationModal({
-    visible, title, message, confirmText, cancelText, onConfirm, onCancel, isDestructive
-}: {
-    visible: boolean; title: string; message: string; confirmText: string; cancelText: string;
-    onConfirm: () => void; onCancel: () => void; isDestructive?: boolean;
-}) {
-    return (
-        <Modal visible={visible} transparent animationType="slide">
-            <View className="flex-1 justify-end bg-black/60">
-                <View className="bg-[#0B0B0F] rounded-t-[48px] border-t border-white/10 p-8 pb-12">
-                    <View className="w-12 h-1.5 bg-zinc-800 rounded-full mx-auto mb-8 opacity-50" />
-                    <View className="items-center text-center mb-6">
-                        <Text weight="extrabold" className="text-2xl text-white tracking-tighter mb-4">{title}</Text>
-                        <Text weight="medium" className="text-zinc-500 text-sm leading-relaxed text-center px-4">{message}</Text>
-                    </View>
-                    <View className="gap-3">
-                        <TouchableOpacity
-                            onPress={onConfirm}
-                            className={`w-full h-16 rounded-[24px] items-center justify-center ${isDestructive ? 'bg-red-500/10 border border-red-500/20' : 'bg-white'}`}
-                        >
-                            <Text weight="extrabold" className={`uppercase tracking-[0.15em] text-[11px] ${isDestructive ? 'text-red-500' : 'text-black'}`}>
-                                {confirmText}
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={onCancel}
-                            className="w-full h-16 bg-white/5 rounded-[24px] items-center justify-center"
-                        >
-                            <Text weight="bold" className="text-zinc-400 text-sm">{cancelText}</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-        </Modal>
     );
 }

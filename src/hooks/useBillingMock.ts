@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PaymentMethod, SubscriptionMetadata, Plan } from '@/types';
+import { SubscriptionMetadata, Plan } from '@/types';
 
 // Extended Types for Billing (Web Parity)
 export interface AICreditPack {
@@ -19,13 +19,6 @@ export interface AIState {
     };
 }
 
-// Mock Data
-const MOCK_PAYMENT_METHOD: PaymentMethod = {
-    last4: '4242',
-    expiry: '12/28',
-    brand: 'visa'
-};
-
 const MOCK_SUB_METADATA: SubscriptionMetadata = {
     isCancelled: false,
     billingPeriodEnd: 'Nov 12, 2026'
@@ -34,7 +27,6 @@ const MOCK_SUB_METADATA: SubscriptionMetadata = {
 export const useBillingMock = () => {
     // State
     const [userPlan, setUserPlan] = useState<Plan>('Free');
-    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(MOCK_PAYMENT_METHOD);
     const [subMetadata, setSubMetadata] = useState<SubscriptionMetadata>(MOCK_SUB_METADATA);
 
     // AI State (Advanced mocking)
@@ -60,14 +52,6 @@ export const useBillingMock = () => {
         setSubMetadata(prev => ({ ...prev, isCancelled: true }));
     };
 
-    const handleAddPayment = () => {
-        setPaymentMethod(MOCK_PAYMENT_METHOD);
-    };
-
-    const handleRemovePayment = () => {
-        setPaymentMethod(null);
-    };
-
     const purchaseCredits = (amount: number) => {
         setAiState(prev => ({
             ...prev,
@@ -79,13 +63,10 @@ export const useBillingMock = () => {
 
     return {
         userPlan,
-        paymentMethod,
         subMetadata,
         aiState,
         handlePlanChange,
         handleCancelSubscription,
-        handleAddPayment,
-        handleRemovePayment,
         purchaseCredits
     };
 };
