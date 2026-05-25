@@ -204,7 +204,7 @@ export default function TimelineScreen() {
                       key={item.id}
                       item={item}
                       userPlan={userPlan}
-                      onClick={() => router.push(`/reminders/${item.id}`)}
+                      onClick={() => router.navigate(`/reminders/${item.id}`)}
                     />
                   ))
                 ) : (

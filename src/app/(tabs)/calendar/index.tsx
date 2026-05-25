@@ -108,7 +108,7 @@ export default function CalendarScreen() {
                                                 item={item}
                                                 userPlan={userPlan}
                                                 dimmed={isPastReminder(item.date, item.time)}
-                                                onClick={() => router.push(`/reminders/${item.id}`)}
+                                                onClick={() => router.navigate(`/reminders/${item.id}`)}
                                                 onToggle={() => toggleReminder(item.id, item.status === 'completed' ? 'active' : 'completed')}
                                             />
                                         </View>

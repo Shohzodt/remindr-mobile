@@ -4,12 +4,10 @@ import "../global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
 import { View, StyleSheet } from "react-native";
-import { Theme } from "@/theme";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
 import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold, PlusJakartaSans_400Regular_Italic, PlusJakartaSans_500Medium_Italic, PlusJakartaSans_600SemiBold_Italic, PlusJakartaSans_700Bold_Italic, PlusJakartaSans_800ExtraBold_Italic } from "@expo-google-fonts/plus-jakarta-sans";
 import * as SplashScreen from 'expo-splash-screen';
-import { TabBar } from "@/components/navigation/TabBar";
 import { NotificationService } from "@/services/notifications.service";
 
 SplashScreen.preventAutoHideAsync();
@@ -24,10 +22,7 @@ function RootLayoutNav() {
   useEffect(() => {
     // Notification Listener
     const subscription = NotificationService.addNotificationResponseReceivedListener((reminderId) => {
-      // Navigate to details
-      // We use router.push. Note: if app is cold start, might need logic handling.
-      // For now simple routing:
-      router.push(`/reminders/${reminderId}`);
+      router.navigate(`/reminders/${reminderId}`);
     });
 
     return () => {

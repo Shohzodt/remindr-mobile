@@ -109,7 +109,7 @@ export default function NotificationsScreen() {
         }
         // Optionally navigate to the reminder
         if (notification.reminderId) {
-            router.push(`/reminders/${notification.reminderId}`);
+            router.navigate(`/reminders/${notification.reminderId}`);
         }
     };
 
@@ -184,4 +184,3 @@ const ClockIcon = () => (
         <View className="w-[1px] h-1 bg-zinc-600 mb-[1px]" />
     </View>
 );
-

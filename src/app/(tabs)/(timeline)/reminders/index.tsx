@@ -139,7 +139,7 @@ export default function RemindersScreen() {
               onToggle={() => handleToggle(item.id, item.status === 'completed' ? 'active' : 'completed')}
               onDelete={() => { }}
               isLoading={togglingId === item.id}
-              onPress={() => router.push(`/reminders/${item.id}`)}
+              onPress={() => router.navigate(`/reminders/${item.id}`)}
             />
           )}
           ListEmptyComponent={
