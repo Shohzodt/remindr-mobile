@@ -30,6 +30,17 @@ export interface FixTimingPayload {
     timezone?: string;
 }
 
+export interface CalendarMetaDay {
+    date: string;
+    count: number;
+}
+
+export interface CalendarMetaResponse {
+    from: string;
+    to: string;
+    days: CalendarMetaDay[];
+}
+
 export type GuardianStatusTone = 'success' | 'warning' | 'danger' | 'info';
 
 export interface GuardianSummaryItem {
@@ -114,6 +125,16 @@ export const RemindersService = {
      */
     async getOne(id: string): Promise<Reminder> {
         const response = await apiClient.get<Reminder>(`/reminders/${id}`);
+        return response.data;
+    },
+
+    /**
+     * Get calendar dot metadata for a date range.
+     */
+    async getCalendarMeta(from: string, to: string): Promise<CalendarMetaResponse> {
+        const response = await apiClient.get<CalendarMetaResponse>('/reminders/calendar-meta', {
+            params: { from, to },
+        });
         return response.data;
     },
 

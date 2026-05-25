@@ -1,10 +1,8 @@
 import React from 'react';
-import { View, TouchableOpacity, Dimensions } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { Modal, Pressable, View, TouchableOpacity } from 'react-native';
 import { Text } from '@/components/ui/Text';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameMonth, isSameDay, addMonths } from 'date-fns';
-import { Theme } from '@/theme';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameMonth, isSameDay } from 'date-fns';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface CalendarGridProps {
@@ -13,115 +11,169 @@ interface CalendarGridProps {
     onSelectDate: (date: Date) => void;
     onClose: () => void;
     onChangeMonth: (amount: number) => void;
+    dots?: Record<string, number>;
 }
 
-export const CalendarGrid = ({ currentDate, selectedDate, onSelectDate, onClose, onChangeMonth }: CalendarGridProps) => {
+const DOT_COLORS = ['#A855F7', '#60A5FA', '#34D399'];
+
+const buildDotIndexes = (count: number) => {
+    return Array.from({ length: Math.min(count, 3) }, (_, index) => index);
+};
+
+export const CalendarGrid = ({ currentDate, selectedDate, onSelectDate, onClose, onChangeMonth, dots = {} }: CalendarGridProps) => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart); // Ensure we start on correct DOW
-    const endDate = endOfWeek(monthEnd);
+    const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
     const days = eachDayOfInterval({
         start: startDate,
         end: endDate
     });
 
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weeks = Array.from({ length: Math.ceil(days.length / 7) }, (_, index) => days.slice(index * 7, index * 7 + 7));
+    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     return (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50 }}>
-            <BlurView
-                intensity={80} // Heavy blur for overlay
-                tint="dark"
-                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            />
-            <View className="flex-1 bg-black/50 justify-center px-4">
-                <View className="bg-[#151518] border border-white/10 rounded-3xl p-6 shadow-2xl">
+        <Modal transparent visible animationType="slide" statusBarTranslucent onRequestClose={onClose}>
+            <View className="flex-1 justify-end">
+                <Pressable className="absolute inset-0 bg-black/80" onPress={onClose} />
+
+                <View
+                    className="relative rounded-t-[34px] border border-white/10 bg-[#111114] px-6 pt-6"
+                    style={{ height: '88%', paddingBottom: 20 }}
+                >
                     {/* Header */}
-                    <View className="flex-row items-center justify-between mb-6">
-                        <TouchableOpacity onPress={() => onChangeMonth(-1)} className="p-2">
-                            <ChevronLeft size={20} color="white" />
-                        </TouchableOpacity>
+                    <View className="mb-6 flex-row items-start justify-between gap-4">
+                        <View className="flex-1">
+                            <Text className="text-two-xl font-sans-extrabold text-white" numberOfLines={1}>
+                                {format(currentDate, 'MMMM yyyy')}
+                            </Text>
 
-                        <Text variant="h2" className="text-white font-sans-extrabold text-2xl tracking-tight">
-                            {format(currentDate, 'MMMM yyyy')}
-                        </Text>
+                            <View className="mt-4 flex-row items-center gap-2">
+                                <TouchableOpacity
+                                    onPress={() => onChangeMonth(-1)}
+                                    className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+                                    activeOpacity={0.8}
+                                >
+                                    <ChevronLeft size={18} color="white" />
+                                </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => onChangeMonth(1)} className="p-2">
-                            <ChevronRight size={20} color="white" />
+                                <TouchableOpacity
+                                    onPress={() => onChangeMonth(1)}
+                                    className="h-9 w-9 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+                                    activeOpacity={0.8}
+                                >
+                                    <ChevronRight size={18} color="white" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <TouchableOpacity
+                            onPress={onClose}
+                            className="h-10 w-10 items-center justify-center rounded-full bg-white/5"
+                            activeOpacity={0.8}
+                        >
+                            <X size={20} color="#ffffff" />
                         </TouchableOpacity>
                     </View>
 
                     {/* Days Header */}
-                    <View className="flex-row justify-between mb-4">
+                    <View className="flex-row border-b border-white/10 pb-3">
                         {weekDays.map(day => (
-                            <Text key={day} className="text-[#52525c] w-[14.28%] text-center text-[10px] font-sans-extrabold tracking-widest uppercase">{day}</Text>
+                            <Text
+                                key={day}
+                                className="text-[#777782] w-[14.28%] text-center font-sans-medium uppercase"
+                                style={{ fontSize: 10, lineHeight: 14, letterSpacing: 1.1 }}
+                            >
+                                {day}
+                            </Text>
                         ))}
                     </View>
 
                     {/* Grid */}
-                    <View className="flex-row flex-wrap">
-                        {days.map((date) => {
-                            const isCurrentMonth = isSameMonth(date, monthStart);
-                            const isSelected = isSameDay(date, selectedDate);
-                            const isToday = isSameDay(date, new Date());
+                    <View>
+                        {weeks.map((week, weekIndex) => (
+                            <View key={week[0].toString()} className={`${weekIndex > 0 ? 'border-t border-white/10' : ''}`}>
+                                <View className="flex-row h-[62px]">
+                                    {week.map((date) => {
+                                        const dateStr = format(date, 'yyyy-MM-dd');
+                                        const count = dots[dateStr] ?? 0;
+                                        const dotIndexes = buildDotIndexes(count);
+                                        const isCurrentMonth = isSameMonth(date, monthStart);
+                                        const isSelected = isSameDay(date, selectedDate);
+                                        const isToday = isSameDay(date, new Date());
 
-                            return (
-                                <TouchableOpacity
-                                    key={date.toString()}
-                                    onPress={() => {
-                                        onSelectDate(date);
-                                        onClose();
-                                    }}
-                                    className="w-[14.28%] aspect-square items-center justify-center mb-2"
-                                >
-                                    {isSelected ? (
-                                        <LinearGradient
-                                            colors={['#e12afb', '#9810fa']}
-                                            start={{ x: 0, y: 1 }}
-                                            end={{ x: 1, y: 0 }}
-                                            style={{ 
-                                                width: 44, 
-                                                height: 44, 
-                                                borderRadius: 22, 
-                                                alignItems: 'center', 
-                                                justifyContent: 'center' 
-                                            }}
-                                        >
-                                            <Text className="text-white font-sans-bold">{format(date, 'd')}</Text>
-                                        </LinearGradient>
-                                    ) : (
-                                        <View 
-                                            style={{ 
-                                                width: 44, 
-                                                height: 44, 
-                                                borderRadius: 22, 
-                                                alignItems: 'center', 
-                                                justifyContent: 'center',
-                                                borderWidth: isToday ? 1 : 0,
-                                                borderColor: isToday ? '#d946ef' : 'transparent'
-                                            }}
-                                        >
-                                            <Text
-                                                className={`${isCurrentMonth ? 'text-white font-sans-bold' : 'text-zinc-600 font-sans-medium'}`}
+                                        return (
+                                            <TouchableOpacity
+                                                key={date.toString()}
+                                                onPress={() => {
+                                                    onSelectDate(date);
+                                                    onClose();
+                                                }}
+                                                className="w-[14.28%] items-center justify-center"
+                                                activeOpacity={0.75}
                                             >
-                                                {format(date, 'd')}
-                                            </Text>
-                                        </View>
-                                    )}
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
+                                                <View className="h-[52px] items-center justify-start">
+                                                    {isSelected ? (
+                                                        <LinearGradient
+                                                            colors={['#e12afb', '#9810fa']}
+                                                            start={{ x: 0, y: 1 }}
+                                                            end={{ x: 1, y: 0 }}
+                                                            style={{
+                                                                width: 36,
+                                                                height: 36,
+                                                                borderRadius: 18,
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center'
+                                                            }}
+                                                        >
+                                                            <Text className="text-white text-[16px] font-sans-extrabold">{format(date, 'd')}</Text>
+                                                        </LinearGradient>
+                                                    ) : (
+                                                        <View
+                                                            style={{
+                                                                width: 36,
+                                                                height: 36,
+                                                                borderRadius: 18,
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                borderWidth: isToday ? 1 : 0,
+                                                                borderColor: isToday ? '#8B5CF6' : 'transparent'
+                                                            }}
+                                                        >
+                                                            <Text
+                                                                className={`${isCurrentMonth ? 'text-white' : 'text-zinc-700'} text-[16px] font-sans-semibold`}
+                                                            >
+                                                                {format(date, 'd')}
+                                                            </Text>
+                                                        </View>
+                                                    )}
 
-                    <TouchableOpacity
-                        onPress={onClose}
-                        className="mt-6 bg-[#202022] border border-white/5 py-4 rounded-2xl items-center w-full active:bg-white/10"
-                    >
-                        <Text className="text-white font-sans-bold tracking-wide">Close</Text>
-                    </TouchableOpacity>
+                                                    <View className="h-3 flex-row items-center justify-center gap-1">
+                                                        {dotIndexes.map((dotIndex) => (
+                                                            <View
+                                                                key={dotIndex}
+                                                                style={{
+                                                                    width: 5,
+                                                                    height: 5,
+                                                                    borderRadius: 2.5,
+                                                                    backgroundColor: DOT_COLORS[dotIndex],
+                                                                    opacity: isCurrentMonth ? 1 : 0.35,
+                                                                }}
+                                                            />
+                                                        ))}
+                                                    </View>
+                                                </View>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </View>
+                        ))}
+                    </View>
                 </View>
             </View>
-        </View>
+        </Modal>
     );
 };

@@ -6,6 +6,7 @@ import { Alert } from 'react-native';
 import { HttpStatusCode } from '@/constants/http';
 
 export const REMINDERS_QUERY_KEY = ['reminders'];
+export const CALENDAR_META_QUERY_KEY = [...REMINDERS_QUERY_KEY, 'calendar-meta'];
 
 export function useReminders() {
     const queryClient = useQueryClient();
@@ -135,6 +136,20 @@ export function useReminder(id?: string) {
         queryKey: ['reminder', id],
         queryFn: () => RemindersService.getOne(id!),
         enabled: !!id,
+    });
+}
+
+export function useCalendarMeta(from: string, to: string, enabled = true) {
+    return useQuery({
+        queryKey: [...CALENDAR_META_QUERY_KEY, from, to],
+        queryFn: async () => {
+            const response = await RemindersService.getCalendarMeta(from, to);
+            return response.days.reduce((acc, day) => {
+                acc[day.date] = day.count;
+                return acc;
+            }, {} as Record<string, number>);
+        },
+        enabled: enabled && Boolean(from) && Boolean(to),
     });
 }
 

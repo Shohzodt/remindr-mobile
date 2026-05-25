@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, SectionList, RefreshControl, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
@@ -9,10 +9,10 @@ import { CalendarStrip } from '@/components/calendar/CalendarStrip';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
 import { EventCard } from '@/components/EventCard';
 import { EmptyState } from '@/components/EmptyState';
-import { addMonths, format } from 'date-fns';
+import { addMonths, endOfMonth, endOfWeek, format, startOfMonth, startOfWeek } from 'date-fns';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react-native';
 import { Layout } from "@/constants/layout";
-import { useReminders } from '@/hooks/useReminders';
+import { useCalendarMeta, useReminders } from '@/hooks/useReminders';
 import { isPastReminder } from '@/utils/reminderTime';
 import { useAuth } from '@/context/AuthContext';
 
@@ -42,6 +42,21 @@ export default function CalendarScreen() {
     const { top: insetsTop } = useSafeAreaInsets();
 
     const userPlan = user?.plan || 'free';
+
+    const calendarMetaRange = useMemo(() => {
+        const monthStart = startOfMonth(viewDate);
+
+        return {
+            from: format(startOfWeek(monthStart, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+            to: format(endOfWeek(endOfMonth(monthStart), { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+        };
+    }, [viewDate]);
+
+    const { data: calendarGridDots = {} } = useCalendarMeta(
+        calendarMetaRange.from,
+        calendarMetaRange.to,
+        isGridVisible
+    );
 
     // Calculate dots for CalendarStrip based on all reminders
     const dots = reminders.reduce((acc, reminder) => {
@@ -140,6 +155,7 @@ export default function CalendarScreen() {
                                 onSelectDate={(date) => setSelectedDate(format(date, 'yyyy-MM-dd'))}
                                 onChangeMonth={(amt) => setViewDate(prev => addMonths(prev, amt))}
                                 onClose={() => setIsGridVisible(false)}
+                                dots={calendarGridDots}
                             />
                         )}
                     </>
