@@ -60,8 +60,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           const userProfile = await AuthService.getProfile();
           if (!userProfile || !userProfile.id) {
-            console.warn('Invalid stored session, logging out.');
-            await clearLocalSession();
+            const restoredAccessToken = await AuthService.refreshAccessToken();
+            if (!restoredAccessToken) {
+              await clearLocalSession();
+              return;
+            }
+
+            const refreshedUserProfile = await AuthService.getProfile();
+            if (!refreshedUserProfile || !refreshedUserProfile.id) {
+              console.warn('Invalid profile response after token refresh, logging out.');
+              await clearLocalSession();
+              return;
+            }
+
+            setUser(refreshedUserProfile);
+            setIsAuthenticated(true);
             return;
           }
           setUser(userProfile);

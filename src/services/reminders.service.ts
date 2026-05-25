@@ -1,5 +1,5 @@
 import { apiClient } from './api.client';
-import { Reminder } from '@/types';
+import { RecurrenceType, Reminder } from '@/types';
 
 export interface CreateReminderDto {
     title: string;
@@ -11,6 +11,7 @@ export interface CreateReminderDto {
     priority: string;
     isProtected: boolean;
     notifyBefore: number;
+    recurrenceType?: RecurrenceType;
     status: string;
     source: string;
 }

@@ -168,6 +168,7 @@ export default function ReminderDetailsScreen() {
                                 decision={fixTimingMutation.data}
                                 errorMessage={fixTimingError}
                                 fixCount={reminder.fixCount}
+                                recurrenceType={reminder.recurrenceType}
                                 isFixing={fixTimingMutation.isPending}
                                 onFixTiming={handleFixTiming}
                             />

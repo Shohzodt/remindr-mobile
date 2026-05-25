@@ -25,6 +25,8 @@ export enum ReminderPriority {
     HIGH = 'high',
 }
 
+export type RecurrenceType = 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
+
 export interface User {
     id: string;
     email: string | null;
@@ -130,6 +132,7 @@ export interface Reminder {
     status?: ReminderStatus | 'active' | 'completed' | 'missed' | 'missed_protected';
     notifyAt?: string; // ISO timestamp (UTC) for when to notify
     notifyBefore?: number; // Minutes before reminder to notify
+    recurrenceType?: RecurrenceType;
     deadlineAt?: string | null;
     fixCount?: number;
     timezone?: string | null;

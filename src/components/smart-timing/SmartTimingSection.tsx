@@ -2,9 +2,10 @@ import React from 'react';
 import { View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
-import { AlertTriangle } from 'lucide-react-native';
+import { AlertTriangle, Repeat2 } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { FixTimingResponse } from '@/services/reminders.service';
+import { RecurrenceType } from '@/types';
 
 interface SmartTimingSectionProps {
     time: string;
@@ -14,6 +15,7 @@ interface SmartTimingSectionProps {
     decision?: FixTimingResponse;
     errorMessage?: string | null;
     fixCount?: number;
+    recurrenceType?: RecurrenceType;
     isFixing?: boolean;
     onFixTiming: () => void;
 }
@@ -29,6 +31,12 @@ const REASON_LABELS: Record<FixTimingResponse['reasonCode'], string> = {
 const formatConfidence = (confidence: FixTimingResponse['confidence']) =>
     `${confidence.charAt(0).toUpperCase()}${confidence.slice(1)} confidence`;
 
+const RECURRENCE_LABELS: Partial<Record<RecurrenceType, string>> = {
+    DAILY: 'Daily',
+    WEEKLY: 'Weekly',
+    MONTHLY: 'Monthly',
+};
+
 export function SmartTimingSection({
     time,
     date,
@@ -37,15 +45,30 @@ export function SmartTimingSection({
     decision,
     errorMessage,
     fixCount,
+    recurrenceType,
     isFixing,
     onFixTiming
 }: SmartTimingSectionProps) {
     const scheduledAt = decision ? new Date(decision.scheduledAt) : null;
     const hasSeveralFixes = (fixCount ?? 0) >= 3 || decision?.risk === true;
+    const recurrenceLabel = recurrenceType ? RECURRENCE_LABELS[recurrenceType] : null;
 
     return (
         <View className="pt-1">
-            <Text className="text-zinc-500 text-xs font-sans-bold uppercase tracking-[1px] mb-1.5">TIME & DATE</Text>
+            <View className="mb-1.5 flex-row items-center gap-2 flex-wrap">
+                <Text className="text-zinc-500 text-xs font-sans-bold uppercase tracking-[1px]">TIME & DATE</Text>
+                {recurrenceLabel && (
+                    <>
+                        <Text className="text-zinc-600 text-xs font-sans-bold">•</Text>
+                        <View className="flex-row items-center gap-1.5">
+                            <Repeat2 size={13} color="#a855f7" />
+                            <Text className="text-zinc-300 text-xs font-sans-bold">
+                                {recurrenceLabel}
+                            </Text>
+                        </View>
+                    </>
+                )}
+            </View>
 
             {scheduledAt ? (
                 <Animated.Text entering={FadeIn} className="text-white text-xl font-sans-bold">

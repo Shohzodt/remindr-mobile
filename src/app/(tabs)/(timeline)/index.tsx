@@ -214,6 +214,7 @@ export default function TimelineScreen() {
                     icon={<CheckCircle size={32} color="#52525b" />}
                     actionLabel="Create"
                     onAction={() => router.push('/create')}
+                    contentHeight={300}
                   />
                 )}
               </View>

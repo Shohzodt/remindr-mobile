@@ -12,6 +12,7 @@ interface EmptyStateProps {
   actionLabel?: string;
   onAction?: () => void;
   compact?: boolean;
+  contentHeight?: number;
 }
 
 export const EmptyState = ({ 
@@ -21,7 +22,10 @@ export const EmptyState = ({
   actionLabel, 
   onAction,
   compact = false,
+  contentHeight,
 }: EmptyStateProps) => {
+  const hasFixedContentHeight = typeof contentHeight === 'number';
+
   return (
     <View className={`relative overflow-hidden ${compact ? 'rounded-[30px]' : 'rounded-[45px]'}`}>
       <LinearGradient
@@ -29,7 +33,10 @@ export const EmptyState = ({
         style={{ position: 'absolute', width: '100%', height: '100%' }}
       />
       
-      <View className={`${compact ? 'py-7 rounded-[30px]' : 'py-14 rounded-[45px]'} items-center justify-center bg-[#0B0B0F]/40 border border-white/5 px-8`}>
+      <View
+        className={`${hasFixedContentHeight ? '' : compact ? 'py-7' : 'py-14'} ${compact ? 'rounded-[30px]' : 'rounded-[45px]'} items-center justify-center bg-[#0B0B0F]/40 border border-white/5 px-8`}
+        style={hasFixedContentHeight ? { height: contentHeight } : undefined}
+      >
         <View className={`${compact ? 'w-14 h-14 rounded-2xl mb-4' : 'w-20 h-20 rounded-3xl mb-6'} bg-white/[0.03] border border-white/5 items-center justify-center shadow-xl`}>
           {icon || <AlertCircle size={32} color="#52525b" />}
         </View>

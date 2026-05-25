@@ -86,13 +86,6 @@ export default function RemindersScreen() {
             </TouchableOpacity>
             <Text variant="h2" weight="extrabold" className="text-white">All Reminders</Text>
           </View>
-
-          <TouchableOpacity
-            onPress={() => router.push('/create')}
-            className="bg-white px-4 py-2 rounded-full active:opacity-90"
-          >
-            <Text weight="bold" className="text-black">+ Create</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Search Bar & Filter Button */}

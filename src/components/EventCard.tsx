@@ -35,8 +35,7 @@ export const EventCard = ({
   isLocked = false,
   type = 'normal',
   dimmed = false,
-  onClick,
-  onToggle
+  onClick
 }: EventCardProps) => {
   // For mobile, we might want to simplify logic or keep it 1:1. Keeping 1:1 for fidelity.
   const isFree = normalizePlan(userPlan) === 'free';
@@ -152,12 +151,11 @@ export const EventCard = ({
       `}
     >
       {/* Icon */}
-      <Pressable
-        onPress={onToggle}
+      <View
         className={`w-[52px] h-[52px] rounded-2xl items-center justify-center shrink-0 ${config.classes}`}
       >
         {config.icon}
-      </Pressable>
+      </View>
 
       <View className="flex-1 min-w-0">
         <View className="flex-row items-center justify-between mb-1">

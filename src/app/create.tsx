@@ -2,16 +2,16 @@ import React, { useState, useRef } from 'react';
 import { View, TextInput, TouchableOpacity, ScrollView, Platform, KeyboardAvoidingView, Switch, Pressable, Modal, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Calendar as CalendarIcon, Clock, Mic, Info, MapPin, FileText, Lock, Repeat2, ChevronDown, Check, X } from 'lucide-react-native';
+import { Calendar as CalendarIcon, Clock, Mic, Info, FileText, Lock, Repeat2, Check, X } from 'lucide-react-native';
 import { Text } from '@/components/ui/Text';
 import { Theme } from '@/theme';
 import { LinearGradient } from 'expo-linear-gradient';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useReminders } from '@/hooks/useReminders';
 import { LocationInput } from '@/components/LocationInput';
 import { Alert, ActivityIndicator } from 'react-native';
-import { ReminderStatus, ReminderSource, ReminderPriority } from '@/types';
+import { RecurrenceType, ReminderStatus, ReminderSource, ReminderPriority } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { isProPlan } from '@/utils/plan';
 import { DocumentAiSheet, DocAiDetectedDeadline } from '@/components/DocumentAiSheet';
@@ -29,10 +29,41 @@ const REPEAT_OPTIONS = [
     { id: 'daily', label: 'Daily' },
     { id: 'weekly', label: 'Weekly' },
     { id: 'monthly', label: 'Monthly' },
-    { id: 'yearly', label: 'Yearly' },
 ] as const;
 
 type RepeatOption = typeof REPEAT_OPTIONS[number]['id'];
+
+const RECURRENCE_TYPE_BY_REPEAT_OPTION: Record<RepeatOption, RecurrenceType> = {
+    never: 'NONE',
+    daily: 'DAILY',
+    weekly: 'WEEKLY',
+    monthly: 'MONTHLY',
+};
+
+const NOTIFY_BEFORE_OPTIONS = [
+    { value: 0, label: 'At time' },
+    { value: 5, label: '5 min before' },
+    { value: 10, label: '10 min before' },
+    { value: 15, label: '15 min before' },
+    { value: 30, label: '30 min before' },
+    { value: 60, label: '1 hour before' },
+] as const;
+
+const formatNotifyBeforeLabel = (notifyBefore: number) => {
+    switch (notifyBefore) {
+        case 0:
+            return 'At time';
+        case 5:
+        case 10:
+        case 15:
+        case 30:
+            return `${notifyBefore}m`;
+        case 60:
+            return '1h';
+        default:
+            return '15m';
+    }
+};
 
 export default function CreateReminderScreen() {
     const router = useRouter();
@@ -42,12 +73,15 @@ export default function CreateReminderScreen() {
     const [location, setLocation] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('personal');
     const [repeatOption, setRepeatOption] = useState<RepeatOption>('never');
+    const [notifyBefore, setNotifyBefore] = useState(15);
     const [isRepeatPickerVisible, setIsRepeatPickerVisible] = useState(false);
+    const [isNotifyPickerVisible, setIsNotifyPickerVisible] = useState(false);
     const [isProtected, setIsProtected] = useState(false);
     const [isDocAiVisible, setIsDocAiVisible] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
 
     const [isFocused, setIsFocused] = useState(false);
+    const titleRef = useRef<TextInput>(null);
     const notesRef = useRef<TextInput>(null);
 
     // Date & Time Logic
@@ -55,7 +89,7 @@ export default function CreateReminderScreen() {
     const [showPicker, setShowPicker] = useState(false);
     const [mode, setMode] = useState<'date' | 'time'>('date');
 
-    const onChange = (event: any, selectedDate?: Date) => {
+    const onChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
         const currentDate = selectedDate || date;
         if (Platform.OS === 'android') {
             setShowPicker(false);
@@ -63,7 +97,14 @@ export default function CreateReminderScreen() {
         setDate(currentDate);
     };
 
+    const dismissEditing = () => {
+        titleRef.current?.blur();
+        notesRef.current?.blur();
+        Keyboard.dismiss();
+    };
+
     const showMode = (currentMode: 'date' | 'time') => {
+        dismissEditing();
         if (showPicker && mode === currentMode) {
             setShowPicker(false);
             return;
@@ -72,8 +113,19 @@ export default function CreateReminderScreen() {
         setMode(currentMode);
     };
 
+    const showNotifyPicker = () => {
+        dismissEditing();
+        setIsNotifyPickerVisible(true);
+    };
+
+    const showRepeatPicker = () => {
+        dismissEditing();
+        setIsRepeatPickerVisible(true);
+    };
+
     const { createReminder, isSaving } = useReminders();
     const selectedRepeatLabel = REPEAT_OPTIONS.find(option => option.id === repeatOption)?.label || 'Never';
+    const selectedNotifyBeforeLabel = formatNotifyBeforeLabel(notifyBefore);
     const isProUser = isProPlan(user?.plan);
     const canUseRecurring = isProUser;
     const hasRepeatSelected = repeatOption !== 'never';
@@ -81,7 +133,7 @@ export default function CreateReminderScreen() {
     const hasDeadline = date instanceof Date && !Number.isNaN(date.getTime());
 
     const handleDocAiPress = () => {
-        Keyboard.dismiss();
+        dismissEditing();
 
         if (!isProUser) {
             router.push('/settings/plans-billing');
@@ -139,6 +191,7 @@ export default function CreateReminderScreen() {
         const hours = date.getHours().toString().padStart(2, '0');
         const minutes = date.getMinutes().toString().padStart(2, '0');
         const timeStr = `${hours}:${minutes}`;
+        const recurrenceType = RECURRENCE_TYPE_BY_REPEAT_OPTION[repeatOption];
 
         // Default to LOW priority if not specified (could add priority picker later)
         // Default notifyBefore to 15 mins
@@ -153,7 +206,8 @@ export default function CreateReminderScreen() {
             priority: ReminderPriority.MEDIUM,
             status: ReminderStatus.ACTIVE,
             source: ReminderSource.MANUAL,
-            notifyBefore: 15
+            notifyBefore,
+            recurrenceType,
         });
 
         if (success) {
@@ -203,6 +257,7 @@ export default function CreateReminderScreen() {
                         {/* Main Input (Natural Language) */}
                         <View className={`bg-[#151518] border rounded-3xl mb-5 min-h-[150px] relative ${isFocused ? 'border-accent-purple' : 'border-white/10'}`}>
                             <TextInput
+                                ref={titleRef}
                                 placeholder="e.g. Design review, Contract renewal, Rent payment"
                                 placeholderTextColor="#71717b"
                                 className="flex-1 text-xl font-sans-bold text-white"
@@ -260,7 +315,7 @@ export default function CreateReminderScreen() {
 
                         {/* Date & Time */}
                         <View className="flex-row gap-3 mb-2">
-                            <View className="w-[44%]">
+                            <View className="w-[48%]">
                                 <Text className="text-[#52525c] mb-2.5 px-1 text-xs font-sans-extrabold tracking-widest uppercase">DATE</Text>
                                 <TouchableOpacity
                                     activeOpacity={0.8}
@@ -274,7 +329,30 @@ export default function CreateReminderScreen() {
                                 </TouchableOpacity>
                             </View>
                             <View className="flex-1">
-                                <Text className="text-[#52525c] mb-2.5 px-1 text-xs font-sans-extrabold tracking-widest uppercase">TIME</Text>
+                                <View className="flex-row items-center justify-between mb-2.5 px-1">
+                                    <Text className="text-[#52525c] text-xs font-sans-extrabold tracking-widest uppercase">TIME</Text>
+                                    <TouchableOpacity
+                                        activeOpacity={canUseRecurring ? 0.8 : 1}
+                                        disabled={!canUseRecurring}
+                                        onPress={showRepeatPicker}
+                                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                        className={`flex-row items-center gap-1 justify-center ${canUseRecurring ? 'active:opacity-70' : 'opacity-35'}`}
+                                    >
+                                        <Text
+                                            className={`font-sans-extrabold ${canUseRecurring ? 'text-accent-purple' : 'text-[#52525b]'}`}
+                                            style={{ fontSize: 12, lineHeight: 12, opacity: 0.82 }}
+                                            numberOfLines={1}
+                                        >
+                                            {selectedRepeatLabel}
+                                        </Text>
+                                        <Repeat2 size={15} color={canUseRecurring ? Theme.colors.accentPurple : '#52525b'} />
+                                        {canUseRecurring && hasRepeatSelected && (
+                                            <View className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-accent-purple items-center justify-center">
+                                                <Check size={7} color="#ffffff" strokeWidth={3} />
+                                            </View>
+                                        )}
+                                    </TouchableOpacity>
+                                </View>
                                 <View className="bg-[#151518] border border-white/10 rounded-2xl h-14 flex-row items-center overflow-hidden">
                                     <TouchableOpacity
                                         activeOpacity={0.8}
@@ -290,17 +368,16 @@ export default function CreateReminderScreen() {
                                     <View className="w-[1px] h-7 bg-white/10" />
 
                                     <TouchableOpacity
-                                        activeOpacity={canUseRecurring ? 0.8 : 1}
-                                        disabled={!canUseRecurring}
-                                        onPress={() => setIsRepeatPickerVisible(true)}
-                                        className={`h-full w-12 items-center justify-center ${canUseRecurring ? 'active:bg-white/5' : 'opacity-35'}`}
+                                        activeOpacity={0.8}
+                                        onPress={showNotifyPicker}
+                                        className="h-full min-w-11 px-2 items-center justify-center active:bg-white/5"
                                     >
-                                        <Repeat2 size={16} color={canUseRecurring ? Theme.colors.accentPurple : '#52525b'} />
-                                        {canUseRecurring && hasRepeatSelected && (
-                                            <View className="absolute top-2 right-2 w-4 h-4 rounded-full bg-accent-purple items-center justify-center">
-                                                <Check size={10} color="#ffffff" strokeWidth={3} />
-                                            </View>
-                                        )}
+                                        <Text
+                                            className="text-accent-purple font-sans-extrabold text-[10px]"
+                                            style={{ opacity: 0.85 }}
+                                        >
+                                            {selectedNotifyBeforeLabel}
+                                        </Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -346,7 +423,10 @@ export default function CreateReminderScreen() {
                                     return (
                                         <TouchableOpacity
                                             key={cat.id}
-                                            onPress={() => setSelectedCategory(cat.id)}
+                                            onPress={() => {
+                                                dismissEditing();
+                                                setSelectedCategory(cat.id);
+                                            }}
                                             activeOpacity={0.8}
                                             className=''
                                         >
@@ -380,7 +460,10 @@ export default function CreateReminderScreen() {
 
                         {/* Add More Details Section Label */}
                         <TouchableOpacity
-                            onPress={() => setShowDetails(!showDetails)}
+                            onPress={() => {
+                                dismissEditing();
+                                setShowDetails(!showDetails);
+                            }}
                             className="flex-row items-center gap-2 mt-2 mb-4 py-2"
                             activeOpacity={0.7}
                         >
@@ -430,7 +513,10 @@ export default function CreateReminderScreen() {
 
                         {/* Protect Deadline */}
                         <Pressable
-                            onPress={!isGuardianAllowed ? () => router.push('/settings/plans-billing') : undefined}
+                            onPress={!isGuardianAllowed ? () => {
+                                dismissEditing();
+                                router.push('/settings/plans-billing');
+                            } : dismissEditing}
                             className={`bg-[#151518] border border-white/10 rounded-3xl p-4 flex-row items-center gap-4 mb-32 ${!isGuardianAllowed ? 'opacity-70' : ''}`}
                         >
                             <View className="w-10 h-10 bg-[#202022] rounded-xl items-center justify-center">
@@ -467,7 +553,10 @@ export default function CreateReminderScreen() {
                         <TouchableOpacity
                             activeOpacity={0.9}
                             className="w-full h-16"
-                            onPress={handleCreate}
+                            onPress={() => {
+                                dismissEditing();
+                                handleCreate();
+                            }}
                             disabled={isSaving}
                         >
                             <LinearGradient
@@ -538,6 +627,66 @@ export default function CreateReminderScreen() {
                                             >
                                                 <View className="flex-row items-center gap-3">
                                                     <Repeat2 size={18} color={isSelected ? Theme.colors.accentPurple : '#71717a'} />
+                                                    <Text className={`font-sans-bold text-base ${isSelected ? 'text-accent-purple' : 'text-white'}`}>
+                                                        {option.label}
+                                                    </Text>
+                                                </View>
+
+                                                {isSelected && (
+                                                    <Check size={18} color={Theme.colors.accentPurple} />
+                                                )}
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </View>
+                            </Pressable>
+                        </Pressable>
+                    </Modal>
+
+                    <Modal
+                        visible={isNotifyPickerVisible}
+                        transparent
+                        animationType="fade"
+                        onRequestClose={() => setIsNotifyPickerVisible(false)}
+                    >
+                        <Pressable
+                            className="flex-1 bg-black/70 justify-end"
+                            onPress={() => setIsNotifyPickerVisible(false)}
+                        >
+                            <Pressable className="bg-[#151518] border border-white/10 rounded-t-[32px] px-6 pt-5 pb-10">
+                                <View className="flex-row items-start justify-between mb-5">
+                                    <View className="flex-1 pr-4">
+                                        <Text className="text-white text-xl font-sans-extrabold mb-1">Notification</Text>
+                                        <Text className="text-[#71717a] text-sm font-sans-medium">
+                                            Choose when Remindr should notify you.
+                                        </Text>
+                                    </View>
+
+                                    <TouchableOpacity
+                                        activeOpacity={0.8}
+                                        onPress={() => setIsNotifyPickerVisible(false)}
+                                        className="w-10 h-10 rounded-full bg-white/5 border border-white/10 items-center justify-center active:bg-white/10"
+                                    >
+                                        <X size={18} color="#ffffff" />
+                                    </TouchableOpacity>
+                                </View>
+
+                                <View className="gap-2">
+                                    {NOTIFY_BEFORE_OPTIONS.map(option => {
+                                        const isSelected = option.value === notifyBefore;
+
+                                        return (
+                                            <TouchableOpacity
+                                                key={option.value}
+                                                activeOpacity={0.8}
+                                                onPress={() => {
+                                                    setNotifyBefore(option.value);
+                                                    setIsNotifyPickerVisible(false);
+                                                }}
+                                                className={`h-14 rounded-2xl border flex-row items-center justify-between px-4 ${isSelected ? 'bg-accent-purple/10 border-accent-purple/40' : 'bg-[#202022] border-white/5'}`}
+                                            >
+                                                <View className="flex-row items-center gap-3">
+                                                    <Clock size={18} color={isSelected ? Theme.colors.accentPurple : '#71717a'} />
                                                     <Text className={`font-sans-bold text-base ${isSelected ? 'text-accent-purple' : 'text-white'}`}>
                                                         {option.label}
                                                     </Text>
