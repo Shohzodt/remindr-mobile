@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { parseLocation, PROVIDER_CONFIG } from '@/utils/locationParser';
 import { SmartTimingSection } from '@/components/smart-timing/SmartTimingSection';
 import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import { getReminderCategoryConfig } from '@/constants/categories';
 
 export default function ReminderDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -71,14 +72,6 @@ export default function ReminderDetailsScreen() {
         }
     };
 
-    const getCategoryStyles = (category?: string) => {
-        const cat = category?.toLowerCase() || '';
-        if (cat === 'work') return 'text-purple-400';
-        if (cat === 'personal') return 'text-pink-400';
-        if (cat === 'social') return 'text-amber-400';
-        return 'text-indigo-400';
-    };
-
     if (isLoading) {
         return (
             <View className="flex-1 bg-[#050505] items-center justify-center">
@@ -115,7 +108,7 @@ export default function ReminderDetailsScreen() {
                 {/* Header */}
                 <View className="flex-row items-center justify-between mb-8 mt-2">
                     <View className="bg-zinc-800/50 px-4 py-1.5 rounded-full border border-white/5">
-                        <Text className={`${getCategoryStyles(reminder.category)} text-xxs font-sans-bold uppercase tracking-wider`}>
+                        <Text className={`${getReminderCategoryConfig(reminder.category).textClass} text-xxs font-sans-bold uppercase tracking-wider`}>
                             {reminder.category || 'REMINDER'}
                         </Text>
                     </View>

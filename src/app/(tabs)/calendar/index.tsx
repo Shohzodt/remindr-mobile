@@ -6,7 +6,7 @@ import { Theme } from '@/theme';
 import { Text } from '@/components/ui/Text';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarStrip } from '@/components/calendar/CalendarStrip';
-import { CalendarGrid } from '@/components/calendar/CalendarGrid';
+import { CalendarGrid, CalendarPreviewEvent } from '@/components/calendar/CalendarGrid';
 import { EventCard } from '@/components/EventCard';
 import { EmptyState } from '@/components/EmptyState';
 import { addMonths, endOfMonth, endOfWeek, format, startOfMonth, startOfWeek } from 'date-fns';
@@ -63,6 +63,19 @@ export default function CalendarScreen() {
         acc[reminder.date] = (acc[reminder.date] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
+
+    const calendarEventsByDate = useMemo(() => {
+        return reminders.reduce((acc, reminder) => {
+            const events = acc[reminder.date] ?? [];
+            events.push({
+                id: reminder.id,
+                title: reminder.title,
+                category: reminder.category,
+            });
+            acc[reminder.date] = events;
+            return acc;
+        }, {} as Record<string, CalendarPreviewEvent[]>);
+    }, [reminders]);
 
     return (
         <View className="flex-1 bg-bg-primary">
@@ -154,8 +167,15 @@ export default function CalendarScreen() {
                                 selectedDate={new Date(selectedDate)}
                                 onSelectDate={(date) => setSelectedDate(format(date, 'yyyy-MM-dd'))}
                                 onChangeMonth={(amt) => setViewDate(prev => addMonths(prev, amt))}
+                                onTodayPress={() => {
+                                    const today = new Date();
+                                    setSelectedDate(format(today, 'yyyy-MM-dd'));
+                                    setViewDate(today);
+                                    setIsGridVisible(false);
+                                }}
                                 onClose={() => setIsGridVisible(false)}
                                 dots={calendarGridDots}
+                                eventsByDate={calendarEventsByDate}
                             />
                         )}
                     </>

@@ -15,14 +15,7 @@ import { RecurrenceType, ReminderStatus, ReminderSource, ReminderPriority } from
 import { useAuth } from '@/context/AuthContext';
 import { isProPlan } from '@/utils/plan';
 import { DocumentAiSheet, DocAiDetectedDeadline } from '@/components/DocumentAiSheet';
-
-// Mock Categories
-const CATEGORIES = [
-    { id: 'personal', label: 'Personal', color: '#3b82f6' },
-    { id: 'work', label: 'Work', color: '#a855f7' },
-    { id: 'social', label: 'Social', color: '#10b981' },
-    { id: 'other', label: 'Other', color: '#71717a' },
-];
+import { REMINDER_CATEGORIES } from '@/constants/categories';
 
 const REPEAT_OPTIONS = [
     { id: 'never', label: 'Never' },
@@ -418,7 +411,7 @@ export default function CreateReminderScreen() {
                         <View className="my-5">
                             <Text className="text-[#52525c] mb-3 px-1 text-xs font-sans-extrabold tracking-widest uppercase">CATEGORY</Text>
                             <View className="flex-row gap-2 flex-wrap">
-                                {CATEGORIES.map(cat => {
+                                {REMINDER_CATEGORIES.map(cat => {
                                     const isSelected = selectedCategory === cat.id;
                                     return (
                                         <TouchableOpacity

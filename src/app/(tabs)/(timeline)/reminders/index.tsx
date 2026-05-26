@@ -6,15 +6,23 @@ import { Text } from "@/components/ui/Text";
 import { ReminderRow } from "@/components/ReminderRow";
 import { EmptyState } from "@/components/EmptyState";
 import { useReminders } from "@/hooks/useReminders";
-import { ReminderCategory } from "@/types";
 import { Search, ArrowLeft, Filter, ChevronDown } from "lucide-react-native";
 import { Layout } from "@/constants/layout";
+import { REMINDER_CATEGORIES } from "@/constants/categories";
 
-const FILTERS = [
+type ReminderFilter = {
+  id: string;
+  label: string;
+  category?: string;
+};
+
+const FILTERS: ReminderFilter[] = [
   { id: 'all', label: 'All' },
-  { id: 'work', label: 'Work', category: ReminderCategory.WORK },
-  { id: 'personal', label: 'Personal', category: ReminderCategory.PERSONAL },
-  { id: 'social', label: 'Social', category: ReminderCategory.SOCIAL },
+  ...REMINDER_CATEGORIES.filter(category => category.id !== 'other').map(category => ({
+    id: category.id,
+    label: category.label,
+    category: category.id,
+  })),
   { id: 'risk', label: 'High Risk' },
 ];
 

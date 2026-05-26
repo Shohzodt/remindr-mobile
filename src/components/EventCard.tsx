@@ -18,6 +18,7 @@ import {
 } from 'lucide-react-native';
 import { getDisplayText } from '@/utils/displayText';
 import { isProPlan, normalizePlan } from '@/utils/plan';
+import { getReminderCategoryConfig, normalizeReminderCategory } from '@/constants/categories';
 
 interface EventCardProps {
   item: Reminder | any; // 'any' allows for the mock data fields like 'risk' or 'color' which might be loosely typed
@@ -98,32 +99,28 @@ export const EventCard = ({
       };
     }
 
-    switch (item.category) {
+    const categoryConfig = getReminderCategoryConfig(item.category);
+
+    switch (normalizeReminderCategory(item.category)) {
       case ReminderCategory.WORK:
-      case 'work':
-      case 'Work':
         return {
-          icon: <Briefcase size={24} color="#C084FC" />, // purple-400
-          classes: 'bg-purple-600/10'
+          icon: <Briefcase size={24} color={categoryConfig.color} />,
+          classes: categoryConfig.iconBgClass
         };
       case ReminderCategory.PERSONAL:
-      case 'personal':
-      case 'Personal':
         return {
-          icon: <User size={24} color="#F472B6" />, // pink-400
-          classes: 'bg-pink-600/10'
+          icon: <User size={24} color={categoryConfig.color} />,
+          classes: categoryConfig.iconBgClass
         };
       case ReminderCategory.SOCIAL:
-      case 'social':
-      case 'Social':
         return {
-          icon: <Users size={24} color="#FBBF24" />, // amber-400
-          classes: 'bg-amber-600/10'
+          icon: <Users size={24} color={categoryConfig.color} />,
+          classes: categoryConfig.iconBgClass
         };
       default:
         return {
-          icon: <Calendar size={24} color="#71717a" />,
-          classes: 'bg-zinc-800/20'
+          icon: <Calendar size={24} color={categoryConfig.color} />,
+          classes: categoryConfig.iconBgClass
         };
     }
   };
