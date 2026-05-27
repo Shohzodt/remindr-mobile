@@ -137,13 +137,20 @@ export default function CreateReminderScreen() {
     };
 
     const handleCreateFromDocAi = (deadline: DocAiDetectedDeadline, sourceFileName: string) => {
-        const detectedDate = new Date(`${deadline.date}T10:00:00`);
+        const [year, month, day] = deadline.date.split('-').map(Number);
 
         setTitle(deadline.title);
-        setNotes(`Doc AI: ${deadline.quote}\n\nSource: ${sourceFileName}`);
+        setNotes(`${deadline.description}\n\nSource: ${sourceFileName}`);
         setLocation('');
-        setSelectedCategory('work');
-        setDate(detectedDate);
+        setDate((currentDate) => {
+            if (!year || !month || !day) {
+                return currentDate;
+            }
+
+            const detectedDate = new Date(currentDate);
+            detectedDate.setFullYear(year, month - 1, day);
+            return detectedDate;
+        });
         setShowDetails(true);
         setIsDocAiVisible(false);
     };
