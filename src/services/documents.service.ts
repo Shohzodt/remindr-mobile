@@ -6,6 +6,8 @@ export interface AnalyzeDocumentFile {
     uri: string;
     name: string;
     type: string;
+    size?: number;
+    fileType?: 'document' | 'image';
 }
 
 export interface AnalyzeDocumentDate {
@@ -41,12 +43,15 @@ const getResponseMessage = (data: any): string | null => {
     return typeof message === 'string' && message.trim() ? message : null;
 };
 
-const toAnalyzeDocumentError = (error: unknown): AnalyzeDocumentError => {
+const toAnalyzeDocumentError = (error: unknown, fileType?: AnalyzeDocumentFile['fileType']): AnalyzeDocumentError => {
     const axiosError = error as AxiosError<any>;
     const status = axiosError.response?.status;
 
     if (status === HttpStatusCode.PAYLOAD_TOO_LARGE) {
-        return new AnalyzeDocumentError('File must be 20MB or smaller.', status);
+        return new AnalyzeDocumentError(
+            fileType === 'image' ? 'Image must be 10MB or smaller.' : 'PDF must be 20MB or smaller.',
+            status
+        );
     }
 
     if (status === HttpStatusCode.BAD_REQUEST) {
@@ -92,7 +97,19 @@ export const DocumentsService = {
                 dates: Array.isArray(response.data?.dates) ? response.data.dates : [],
             };
         } catch (error) {
-            throw toAnalyzeDocumentError(error);
+            if (__DEV__) {
+                const axiosError = error as AxiosError<any>;
+                console.warn('Document analysis upload failed', {
+                    status: axiosError.response?.status,
+                    data: axiosError.response?.data,
+                    fileName: file.name,
+                    mimeType: file.type,
+                    size: file.size,
+                    fileType: file.fileType,
+                });
+            }
+
+            throw toAnalyzeDocumentError(error, file.fileType);
         }
     },
 };

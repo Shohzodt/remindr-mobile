@@ -67,11 +67,11 @@ export default function ProfileSettingsScreen() {
                         </View>
                     </View>
 
-                    <TouchableOpacity activeOpacity={0.7}>
+                    {/* <TouchableOpacity activeOpacity={0.7}>
                         <Text variant="micro" className="text-accent-purple tracking-widest">
                             CHANGE PROFILE PHOTO
                         </Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
 
                 {/* Form Sections */}

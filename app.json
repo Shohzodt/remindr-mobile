@@ -46,6 +46,13 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Remindr to choose images for Document AI analysis.",
+          "cameraPermission": "Allow Remindr to take photos for Document AI analysis."
+        }
+      ],
       "@react-native-community/datetimepicker"
     ]
   }

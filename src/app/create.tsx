@@ -14,7 +14,7 @@ import { Alert, ActivityIndicator } from 'react-native';
 import { RecurrenceType, ReminderStatus, ReminderSource, ReminderPriority } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { isProPlan } from '@/utils/plan';
-import { DocumentAiSheet, DocAiDetectedDeadline } from '@/components/DocumentAiSheet';
+import { DocumentAiSheet, DocAiDetectedDeadline } from '@/components/document-ai';
 import { REMINDER_CATEGORIES } from '@/constants/categories';
 
 const REPEAT_OPTIONS = [
