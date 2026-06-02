@@ -53,7 +53,13 @@
           "cameraPermission": "Allow Remindr to take photos for Document AI analysis."
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow Remindr to record voice reminders."
+        }
+      ]
     ]
   }
 }

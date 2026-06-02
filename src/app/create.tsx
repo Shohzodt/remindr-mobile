@@ -15,6 +15,7 @@ import { RecurrenceType, ReminderStatus, ReminderSource, ReminderPriority } from
 import { useAuth } from '@/context/AuthContext';
 import { isProPlan } from '@/utils/plan';
 import { DocumentAiSheet, DocAiDetectedDeadline } from '@/components/document-ai';
+import { useVoiceReminderFormApply, VoiceReminderSheet } from '@/components/voice-reminder';
 import { REMINDER_CATEGORIES } from '@/constants/categories';
 
 const REPEAT_OPTIONS = [
@@ -41,6 +42,8 @@ const NOTIFY_BEFORE_OPTIONS = [
     { value: 30, label: '30 min before' },
     { value: 60, label: '1 hour before' },
 ] as const;
+
+const NOTIFY_BEFORE_VALUES = NOTIFY_BEFORE_OPTIONS.map(option => option.value);
 
 const formatNotifyBeforeLabel = (notifyBefore: number) => {
     switch (notifyBefore) {
@@ -71,6 +74,7 @@ export default function CreateReminderScreen() {
     const [isNotifyPickerVisible, setIsNotifyPickerVisible] = useState(false);
     const [isProtected, setIsProtected] = useState(false);
     const [isDocAiVisible, setIsDocAiVisible] = useState(false);
+    const [isVoiceSheetVisible, setIsVoiceSheetVisible] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
 
     const [isFocused, setIsFocused] = useState(false);
@@ -124,6 +128,23 @@ export default function CreateReminderScreen() {
     const hasRepeatSelected = repeatOption !== 'never';
     const isGuardianAllowed = isProUser;
     const hasDeadline = date instanceof Date && !Number.isNaN(date.getTime());
+    const handleApplyVoiceReminder = useVoiceReminderFormApply({
+        title,
+        notes,
+        date,
+        selectedCategory,
+        notifyBefore,
+        allowedNotifyBeforeValues: NOTIFY_BEFORE_VALUES,
+        titleRef,
+        notesRef,
+        setTitle,
+        setNotes,
+        setSelectedCategory,
+        setNotifyBefore,
+        setDate,
+        setShowDetails,
+        onApplied: () => setIsVoiceSheetVisible(false),
+    });
 
     const handleDocAiPress = () => {
         dismissEditing();
@@ -134,6 +155,17 @@ export default function CreateReminderScreen() {
         }
 
         setIsDocAiVisible(true);
+    };
+
+    const handleVoicePress = () => {
+        dismissEditing();
+
+        if (!isProUser) {
+            router.push('/settings/plans-billing');
+            return;
+        }
+
+        setIsVoiceSheetVisible(true);
     };
 
     const handleCreateFromDocAi = (deadline: DocAiDetectedDeadline, sourceFileName: string) => {
@@ -278,11 +310,11 @@ export default function CreateReminderScreen() {
                                 autoFocus
                             />
                             <TouchableOpacity
-                                disabled
-                                activeOpacity={1}
-                                className="absolute bottom-5 right-5 w-[48px] h-[48px] bg-[#202022] rounded-md items-center justify-center border border-white/5 opacity-40"
+                                activeOpacity={0.8}
+                                onPress={handleVoicePress}
+                                className="absolute bottom-5 right-5 w-[48px] h-[48px] bg-[#202022] rounded-md items-center justify-center border border-white/5 active:bg-white/5"
                             >
-                                <Mic size={24} color="#52525b" />
+                                <Mic size={24} color={Theme.colors.accentPurple} />
                             </TouchableOpacity>
                         </View>
 
@@ -707,6 +739,12 @@ export default function CreateReminderScreen() {
                         visible={isDocAiVisible}
                         onClose={() => setIsDocAiVisible(false)}
                         onCreateReminder={handleCreateFromDocAi}
+                    />
+
+                    <VoiceReminderSheet
+                        visible={isVoiceSheetVisible}
+                        onClose={() => setIsVoiceSheetVisible(false)}
+                        onApply={handleApplyVoiceReminder}
                     />
 
                 </KeyboardAvoidingView>
