@@ -39,6 +39,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                     <TabBarItem
                         name="Timeline"
                         routeName="(timeline)"
+                        href="/"
                         state={state}
                         navigation={navigation}
                     />
@@ -48,6 +49,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                     <TabBarItem
                         name="Discover"
                         routeName="discover/index"
+                        href="/discover"
                         state={state}
                         navigation={navigation}
                     />
@@ -79,6 +81,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                     <TabBarItem
                         name="Calendar"
                         routeName="calendar/index"
+                        href="/calendar"
                         state={state}
                         navigation={navigation}
                     />
@@ -88,6 +91,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                     <TabBarItem
                         name="Profile"
                         routeName="settings"
+                        href="/settings"
                         state={state}
                         navigation={navigation}
                         avatarUrl={user?.avatarUrl}
@@ -99,13 +103,15 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     );
 }
 
-function TabBarItem({ name, routeName, state, navigation, avatarUrl }: {
+function TabBarItem({ name, routeName, href, state, navigation, avatarUrl }: {
     name: 'Timeline' | 'Discover' | 'Calendar' | 'Profile';
     routeName: string;
+    href: '/' | '/discover' | '/calendar' | '/settings';
     state: any;
     navigation: any;
     avatarUrl?: string; // Add avatarUrl support
 }) {
+    const router = useRouter();
 
     // Find index of the route
     const index = state.routes.findIndex((r: any) => r.name === routeName);
@@ -124,7 +130,7 @@ function TabBarItem({ name, routeName, state, navigation, avatarUrl }: {
 
         if (!isFocused && !event.defaultPrevented) {
             Haptics.selectionAsync();
-            navigation.navigate(routeName);
+            router.navigate(href);
         }
     };
 
