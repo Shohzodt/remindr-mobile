@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
+    Alert,
     View,
     ScrollView,
     FlatList,
@@ -7,38 +8,38 @@ import {
     ImageBackground,
     Dimensions,
     StyleSheet,
-    NativeSyntheticEvent,
-    NativeScrollEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Text } from '@/components/ui/Text';
+import { DiscoverDetailDrawer, type DiscoverItem } from '@/components/discover/DiscoverDetailDrawer';
 import { Layout } from '@/constants/layout';
-
-// ─── Types ──────────────────────────────────────────────────────────
-interface EventItem {
-    id: string;
-    title: string;
-    category: string;
-    categoryColor: string;
-    date: string;
-    location: string;
-    image: string;
-}
+import { useAuth } from '@/context/AuthContext';
+import { RemindersService } from '@/services/reminders.service';
+import { isProPlan } from '@/utils/plan';
 
 // ─── Mock Data ──────────────────────────────────────────────────────
-const FEATURED_EVENTS: EventItem[] = [
+const FEATURED_EVENTS: DiscoverItem[] = [
     {
         id: '1',
         title: 'Neon Dreams Tour',
         category: 'MUSIC',
         categoryColor: '#C084FC',
         date: 'OCT 24',
+        startsAt: '2026-10-24T20:00:00-04:00',
+        summary: 'Get reminded before tickets, start time, or deadlines.',
+        venue: 'Madison Square Garden',
         location: 'Madison Square Garden, NY',
+        city: 'New York',
+        country: 'US',
         image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80',
+        imageType: 'music',
+        source: { key: 'afisha_uz', name: 'Afisha.uz' },
+        sourceUrl: 'https://www.afisha.uz/',
     },
     {
         id: '2',
@@ -46,8 +47,16 @@ const FEATURED_EVENTS: EventItem[] = [
         category: 'FESTIVAL',
         categoryColor: '#FB923C',
         date: 'TOMORROW',
+        startsAt: '2026-06-10T19:00:00-07:00',
+        summary: 'Track the opening time, ticket windows, and schedule updates for this experience.',
+        venue: 'The Dolby Theatre',
         location: 'The Dolby Theatre, LA',
+        city: 'Los Angeles',
+        country: 'US',
         image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800&q=80',
+        imageType: 'cinema',
+        source: { key: 'afisha_uz', name: 'Afisha.uz' },
+        sourceUrl: 'https://www.afisha.uz/',
     },
     {
         id: '3',
@@ -55,20 +64,36 @@ const FEATURED_EVENTS: EventItem[] = [
         category: 'TECH',
         categoryColor: '#38BDF8',
         date: 'NOV 12',
+        startsAt: '2026-11-12T09:00:00-08:00',
+        summary: 'Stay ahead of registration deadlines, session starts, and last-minute venue changes.',
+        venue: 'Moscone Center',
         location: 'Moscone Center, SF',
+        city: 'San Francisco',
+        country: 'US',
         image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80',
+        imageType: 'other',
+        source: { key: 'afisha_uz', name: 'Afisha.uz' },
+        sourceUrl: 'https://www.afisha.uz/',
     },
 ];
 
-const EXPERIENCE_EVENTS: EventItem[] = [
+const EXPERIENCE_EVENTS: DiscoverItem[] = [
     {
         id: '4',
         title: 'Modern Gallery Opening',
         category: 'ART',
         categoryColor: '#FBBF24',
         date: 'FRI, 7 PM',
+        startsAt: '2026-06-12T19:00:00-04:00',
+        summary: 'A curated opening night reminder for arrival time, RSVP windows, and venue details.',
+        venue: 'MoMA West Wing',
         location: 'MoMA West Wing, 5th Ave',
+        city: 'New York',
+        country: 'US',
         image: 'https://images.unsplash.com/photo-1531243269054-5ebf6f34081e?w=800&q=80',
+        imageType: 'exhibition',
+        source: { key: 'afisha_uz', name: 'Afisha.uz' },
+        sourceUrl: 'https://www.afisha.uz/',
     },
     {
         id: '5',
@@ -76,8 +101,16 @@ const EXPERIENCE_EVENTS: EventItem[] = [
         category: 'MUSIC',
         categoryColor: '#C084FC',
         date: '8:00 PM',
+        startsAt: '2026-06-09T20:00:00-04:00',
+        summary: 'Set a reminder before the set starts so you have time to arrive and settle in.',
+        venue: 'The Skylight Lounge',
         location: 'The Skylight Lounge, Dow...',
+        city: 'New York',
+        country: 'US',
         image: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800&q=80',
+        imageType: 'music',
+        source: { key: 'afisha_uz', name: 'Afisha.uz' },
+        sourceUrl: 'https://www.afisha.uz/',
     },
 ];
 
@@ -86,10 +119,18 @@ const CATEGORIES = ['Recommended', 'Tech', 'Music', 'Sports', 'Art', 'Food'];
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.82;
 const CARD_GAP = 14;
-const SHOW_DISCOVER_CONTENT = false;
+const SHOW_DISCOVER_CONTENT = true;
 
 // ─── Featured Card ──────────────────────────────────────────────────
-function FeaturedCard({ item }: { item: EventItem }) {
+function FeaturedCard({
+    item,
+    onPress,
+    onRemindPress,
+}: {
+    item: DiscoverItem;
+    onPress: () => void;
+    onRemindPress: () => void;
+}) {
     const [liked, setLiked] = useState(false);
 
     const handleLike = () => {
@@ -98,11 +139,16 @@ function FeaturedCard({ item }: { item: EventItem }) {
     };
 
     const handleRemind = () => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onRemindPress();
     };
 
     return (
-        <View style={[styles.featuredCard, { width: CARD_WIDTH }]}>
+        <TouchableOpacity
+            onPress={onPress}
+            activeOpacity={0.92}
+            style={[styles.featuredCard, { width: CARD_WIDTH }]}
+        >
             <ImageBackground
                 source={{ uri: item.image }}
                 style={styles.featuredImage}
@@ -188,7 +234,7 @@ function FeaturedCard({ item }: { item: EventItem }) {
                     </View>
                 </LinearGradient>
             </ImageBackground>
-        </View>
+        </TouchableOpacity>
     );
 }
 
@@ -226,7 +272,15 @@ function CategoryChip({
 }
 
 // ─── Experience Card (Grid) ─────────────────────────────────────────
-function ExperienceCard({ item }: { item: EventItem }) {
+function ExperienceCard({
+    item,
+    onPress,
+    onRemindPress,
+}: {
+    item: DiscoverItem;
+    onPress: () => void;
+    onRemindPress: () => void;
+}) {
     const [liked, setLiked] = useState(false);
 
     const handleLike = () => {
@@ -235,11 +289,12 @@ function ExperienceCard({ item }: { item: EventItem }) {
     };
 
     const handleRemind = () => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onRemindPress();
     };
 
     return (
-        <View style={styles.experienceCard}>
+        <TouchableOpacity onPress={onPress} activeOpacity={0.92} style={styles.experienceCard}>
             <ImageBackground
                 source={{ uri: item.image }}
                 style={styles.experienceImage}
@@ -321,18 +376,64 @@ function ExperienceCard({ item }: { item: EventItem }) {
                     </View>
                 </LinearGradient>
             </ImageBackground>
-        </View>
+        </TouchableOpacity>
     );
 }
 
 // ─── Main Screen ────────────────────────────────────────────────────
 export default function DiscoverScreen() {
+    const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { user } = useAuth();
     const [activeCategory, setActiveCategory] = useState(0);
+    const [selectedDiscoverItem, setSelectedDiscoverItem] = useState<DiscoverItem | null>(null);
+    const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+    const [isAddingDiscoverReminder, setIsAddingDiscoverReminder] = useState(false);
+    const isProUser = isProPlan(user?.plan);
 
     const handleCategoryPress = (index: number) => {
         Haptics.selectionAsync();
         setActiveCategory(index);
+    };
+
+    const handleOpenDrawer = (item: DiscoverItem) => {
+        Haptics.selectionAsync();
+        setSelectedDiscoverItem(item);
+        setIsDrawerVisible(true);
+    };
+
+    const handleCloseDrawer = () => {
+        if (isAddingDiscoverReminder) return;
+        setIsDrawerVisible(false);
+    };
+
+    const handleAddReminder = async (item: DiscoverItem, notifyBefore: number[]) => {
+        if (!isProUser) {
+            setIsDrawerVisible(false);
+
+            try {
+                router.push('/settings/plans-billing');
+            } catch {
+                Alert.alert('Discover reminder', 'Adding Discover items is a Pro feature.');
+            }
+
+            return;
+        }
+
+        setIsAddingDiscoverReminder(true);
+
+        try {
+            await RemindersService.addDiscoverReminder(item.id, { notifyBefore });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setIsDrawerVisible(false);
+            Alert.alert('Reminder added', 'This Discover item was added to your reminders.');
+        } catch (error) {
+            console.warn('Add Discover reminder failed', error);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert('Reminder not added', 'Discover reminders are not available yet. Please try again later.');
+        } finally {
+            setIsAddingDiscoverReminder(false);
+        }
     };
 
     if (!SHOW_DISCOVER_CONTENT) {
@@ -407,7 +508,13 @@ export default function DiscoverScreen() {
                         snapToInterval={CARD_WIDTH + CARD_GAP}
                         decelerationRate="fast"
                         ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
-                        renderItem={({ item }) => <FeaturedCard item={item} />}
+                        renderItem={({ item }) => (
+                            <FeaturedCard
+                                item={item}
+                                onPress={() => handleOpenDrawer(item)}
+                                onRemindPress={() => handleOpenDrawer(item)}
+                            />
+                        )}
                     />
                 </View>
 
@@ -452,11 +559,24 @@ export default function DiscoverScreen() {
                     {/* Grid */}
                     <View className="flex-row gap-3">
                         {EXPERIENCE_EVENTS.map(item => (
-                            <ExperienceCard key={item.id} item={item} />
+                            <ExperienceCard
+                                key={item.id}
+                                item={item}
+                                onPress={() => handleOpenDrawer(item)}
+                                onRemindPress={() => handleOpenDrawer(item)}
+                            />
                         ))}
                     </View>
                 </View>
             </ScrollView>
+
+            <DiscoverDetailDrawer
+                visible={isDrawerVisible}
+                item={selectedDiscoverItem}
+                onClose={handleCloseDrawer}
+                onAddReminder={handleAddReminder}
+                isAdding={isAddingDiscoverReminder}
+            />
         </View>
     );
 }

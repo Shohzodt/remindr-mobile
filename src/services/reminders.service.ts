@@ -30,6 +30,10 @@ export interface FixTimingPayload {
     timezone?: string;
 }
 
+export interface AddDiscoverReminderPayload {
+    notifyBefore: number[];
+}
+
 export interface CalendarMetaDay {
     date: string;
     count: number;
@@ -109,6 +113,15 @@ export const RemindersService = {
      */
     async create(data: CreateReminderDto): Promise<Reminder> {
         const response = await apiClient.post<Reminder>('/reminders', data);
+        return response.data;
+    },
+
+    /**
+     * Add a Discover item as a normal reminder.
+     * TODO: Wire to the production backend once POST /discover/:id/add-reminder is available.
+     */
+    async addDiscoverReminder(id: string, payload: AddDiscoverReminderPayload): Promise<Reminder> {
+        const response = await apiClient.post<Reminder>(`/discover/${id}/add-reminder`, payload);
         return response.data;
     },
 

@@ -307,7 +307,6 @@ export default function CreateReminderScreen() {
                                 }}
                                 onFocus={() => setIsFocused(true)}
                                 onBlur={() => setIsFocused(false)}
-                                autoFocus
                             />
                             <TouchableOpacity
                                 activeOpacity={0.8}
