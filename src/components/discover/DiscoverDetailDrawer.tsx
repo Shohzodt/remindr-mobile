@@ -16,39 +16,7 @@ import { Bell, ExternalLink, MapPin, X } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Theme } from '@/theme';
-
-export type DiscoverImageType =
-    | 'music'
-    | 'theater'
-    | 'cinema'
-    | 'exhibition'
-    | 'sport'
-    | 'kids'
-    | 'culture'
-    | 'other';
-
-export type DiscoverItem = {
-    id: string;
-    title: string;
-    summary?: string;
-    category: string;
-    categoryColor: string;
-    date: string;
-    startsAt?: string;
-    endsAt?: string;
-    venue?: string;
-    location?: string;
-    city?: string;
-    country?: string;
-    image?: string;
-    imageUrl?: string;
-    imageType?: DiscoverImageType;
-    source?: {
-        key: 'afisha_uz' | 'manual';
-        name: string;
-    };
-    sourceUrl?: string;
-};
+import type { DiscoverItem } from '@/types/discover';
 
 type DiscoverDetailDrawerProps = {
     visible: boolean;
@@ -56,6 +24,7 @@ type DiscoverDetailDrawerProps = {
     onClose: () => void;
     onAddReminder: (item: DiscoverItem, notifyBeforeMinutes: number[]) => void | Promise<void>;
     isAdding?: boolean;
+    isAdded?: boolean;
 };
 
 const DISCOVER_NOTIFY_BEFORE_MINUTES = [4320, 1440, 60];
@@ -70,12 +39,15 @@ const getLocationLabel = (item: DiscoverItem) => {
     return item.venue || item.location || [item.city, item.country].filter(Boolean).join(', ');
 };
 
+const formatCategoryLabel = (category: string) => category.toUpperCase();
+
 export function DiscoverDetailDrawer({
     visible,
     item,
     onClose,
     onAddReminder,
     isAdding = false,
+    isAdded = false,
 }: DiscoverDetailDrawerProps) {
     const insets = useSafeAreaInsets();
 
@@ -84,7 +56,7 @@ export function DiscoverDetailDrawer({
     const imageUri = item.imageUrl || item.image;
     const hasDate = Boolean(item.startsAt);
     const locationLabel = getLocationLabel(item);
-    const sourceName = item.source?.name;
+    const sourceName = item.source?.name || (item.sourceUrl ? 'Source' : undefined);
 
     const openSource = () => {
         if (!item.sourceUrl) return;
@@ -95,7 +67,7 @@ export function DiscoverDetailDrawer({
     };
 
     const handleAddReminder = () => {
-        if (!hasDate || isAdding) return;
+        if (!hasDate || isAdding || isAdded) return;
         onAddReminder(item, DISCOVER_NOTIFY_BEFORE_MINUTES);
     };
 
@@ -140,7 +112,7 @@ export function DiscoverDetailDrawer({
                                                 weight="extrabold"
                                                 style={{ color: item.categoryColor, fontSize: 10, letterSpacing: 2 }}
                                             >
-                                                {item.category}
+                                                {formatCategoryLabel(item.category)}
                                             </Text>
                                             <View className="h-1 w-1 rounded-full bg-white/40" />
                                             <Text
@@ -193,7 +165,7 @@ export function DiscoverDetailDrawer({
                                             weight="extrabold"
                                             style={{ color: item.categoryColor, fontSize: 10, letterSpacing: 2 }}
                                         >
-                                            {item.category}
+                                            {formatCategoryLabel(item.category)}
                                         </Text>
                                         <View className="h-1 w-1 rounded-full bg-white/40" />
                                         <Text
@@ -240,7 +212,7 @@ export function DiscoverDetailDrawer({
                                 </Text>
                                 <View className="flex-row items-center justify-between gap-4">
                                     <Text className="flex-1 text-[14px] font-sans-bold text-white">
-                                        Source: {sourceName}
+                                        {item.source?.name ? `Source: ${sourceName}` : sourceName}
                                     </Text>
 
                                     {!!item.sourceUrl && (
@@ -278,12 +250,12 @@ export function DiscoverDetailDrawer({
 
                     <TouchableOpacity
                         onPress={handleAddReminder}
-                        disabled={!hasDate || isAdding}
+                        disabled={!hasDate || isAdding || isAdded}
                         activeOpacity={0.9}
                         className="mx-6 mb-1 h-16 shadow-lg shadow-purple-500/20"
                     >
                         <LinearGradient
-                            colors={!hasDate || isAdding ? ['#202022', '#202022'] : ['#d946ef', '#9333ea']}
+                            colors={!hasDate || isAdding || isAdded ? ['#202022', '#202022'] : ['#d946ef', '#9333ea']}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             style={{
@@ -297,7 +269,7 @@ export function DiscoverDetailDrawer({
                                 <ActivityIndicator color="#ffffff" />
                             ) : (
                                 <Text className={`text-lg font-sans-bold ${hasDate ? 'text-white' : 'text-zinc-500'}`}>
-                                    {hasDate ? 'Remind Me' : 'Date not available'}
+                                    {!hasDate ? 'Date not available' : isAdded ? 'Added' : 'Remind Me'}
                                 </Text>
                             )}
                         </LinearGradient>

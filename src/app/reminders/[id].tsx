@@ -5,13 +5,75 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Text } from '@/components/ui/Text';
 import { Theme } from '@/theme';
 import { useFixReminderTiming, useReminder, useReminders } from '@/hooks/useReminders';
-import { Clock, MapPin, CheckCircle, Trash2, FileText, Share2, Video, ExternalLink } from 'lucide-react-native';
+import { Clock, MapPin, CheckCircle, Trash2, FileText, Share2, Video, ExternalLink, Link as LinkIcon } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format } from 'date-fns';
 import { parseLocation, PROVIDER_CONFIG } from '@/utils/locationParser';
 import { SmartTimingSection } from '@/components/smart-timing/SmartTimingSection';
 import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { getReminderCategoryConfig } from '@/constants/categories';
+
+type NoteLink = {
+    url: string;
+    label: string;
+    color: string;
+    bg: string;
+    icon: 'video' | 'map' | 'link';
+};
+
+const URL_REGEX = /(?:https?:\/\/|www\.)[^\s<>()]+/gi;
+
+const cleanUrl = (value: string) => {
+    const trimmed = value.replace(/[.,)]+$/, '');
+    return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`;
+};
+
+const getUrlLabel = (url: string) => {
+    try {
+        return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+        return 'Open link';
+    }
+};
+
+const parseNoteLinks = (note?: string): NoteLink[] => {
+    if (!note) return [];
+
+    const matches = note.match(URL_REGEX) || [];
+    const seen = new Set<string>();
+
+    return matches.reduce<NoteLink[]>((links, match) => {
+        const url = cleanUrl(match);
+        if (seen.has(url)) return links;
+        seen.add(url);
+
+        const parsed = parseLocation(url);
+        if ((parsed.type === 'meeting' || parsed.type === 'location') && parsed.provider) {
+            const config = PROVIDER_CONFIG[parsed.provider];
+            links.push({
+                url,
+                label: config.label,
+                color: config.color,
+                bg: config.bg,
+                icon: config.icon,
+            });
+            return links;
+        }
+
+        links.push({
+            url,
+            label: getUrlLabel(url),
+            color: Theme.colors.accentPurple,
+            bg: 'rgba(139, 92, 246, 0.15)',
+            icon: 'link',
+        });
+        return links;
+    }, []);
+};
+
+const stripNoteLinks = (note?: string) => {
+    return (note || '').replace(URL_REGEX, '').replace(/\s{2,}/g, ' ').trim();
+};
 
 export default function ReminderDetailsScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,6 +84,8 @@ export default function ReminderDetailsScreen() {
     const fixTimingMutation = useFixReminderTiming(id);
 
     const [toastMessage, setToastMessage] = useState<string | null>(null);
+    const noteLinks = useMemo(() => parseNoteLinks(reminder?.note), [reminder?.note]);
+    const noteText = useMemo(() => stripNoteLinks(reminder?.note), [reminder?.note]);
 
     const handleFixTiming = () => {
         if (reminder?.isProtected) return;
@@ -220,8 +284,44 @@ export default function ReminderDetailsScreen() {
                                 <Text className="text-zinc-500 text-xs font-sans-bold uppercase tracking-[1px] mb-3">NOTES</Text>
                                 <View className="bg-zinc-900/50 border border-white/5 rounded-3xl p-5 w-full">
                                     <Text className="text-zinc-300 text-md font-sans-medium leading-7">
-                                        {reminder.note || 'No additional notes provided.'}
+                                        {noteText || (noteLinks.length > 0 ? 'Links attached below.' : 'No additional notes provided.')}
                                     </Text>
+                                    {noteLinks.length > 0 && (
+                                        <View className="mt-4 gap-2">
+                                            {noteLinks.map((link) => {
+                                                const IconComponent = link.icon === 'video'
+                                                    ? Video
+                                                    : link.icon === 'map'
+                                                        ? MapPin
+                                                        : LinkIcon;
+
+                                                return (
+                                                    <TouchableOpacity
+                                                        key={link.url}
+                                                        onPress={() => Linking.openURL(link.url).catch(() => {
+                                                            Alert.alert('Could not open link', 'Please try again later.');
+                                                        })}
+                                                        activeOpacity={0.8}
+                                                        className="flex-row items-center rounded-2xl border px-3.5 py-3"
+                                                        style={{
+                                                            backgroundColor: link.bg,
+                                                            borderColor: link.color,
+                                                        }}
+                                                    >
+                                                        <IconComponent size={16} color={link.color} style={{ marginRight: 10 }} />
+                                                        <Text
+                                                            className="flex-1 text-sm font-sans-bold"
+                                                            style={{ color: link.color }}
+                                                            numberOfLines={1}
+                                                        >
+                                                            {link.label}
+                                                        </Text>
+                                                        <ExternalLink size={14} color={link.color} />
+                                                    </TouchableOpacity>
+                                                );
+                                            })}
+                                        </View>
+                                    )}
                                 </View>
                             </View>
                         </View>

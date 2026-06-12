@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
+    StyleProp,
     View,
     ScrollView,
+    RefreshControl,
     FlatList,
     TouchableOpacity,
     ImageBackground,
     Dimensions,
+    ImageStyle,
     StyleSheet,
+    ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -16,118 +21,95 @@ import { Heart, MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Text } from '@/components/ui/Text';
-import { DiscoverDetailDrawer, type DiscoverItem } from '@/components/discover/DiscoverDetailDrawer';
+import { EmptyState } from '@/components/EmptyState';
+import { DiscoverDetailDrawer } from '@/components/discover/DiscoverDetailDrawer';
 import { Layout } from '@/constants/layout';
 import { useAuth } from '@/context/AuthContext';
-import { RemindersService } from '@/services/reminders.service';
+import { useAddDiscoverReminder, useDiscoverCategoryItems, useDiscoverFeaturedItems } from '@/hooks/useDiscover';
 import { isProPlan } from '@/utils/plan';
+import type { DiscoverCategoryKey, DiscoverItem } from '@/types/discover';
 
-// ─── Mock Data ──────────────────────────────────────────────────────
-const FEATURED_EVENTS: DiscoverItem[] = [
-    {
-        id: '1',
-        title: 'Neon Dreams Tour',
-        category: 'MUSIC',
-        categoryColor: '#C084FC',
-        date: 'OCT 24',
-        startsAt: '2026-10-24T20:00:00-04:00',
-        summary: 'Get reminded before tickets, start time, or deadlines.',
-        venue: 'Madison Square Garden',
-        location: 'Madison Square Garden, NY',
-        city: 'New York',
-        country: 'US',
-        image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80',
-        imageType: 'music',
-        source: { key: 'afisha_uz', name: 'Afisha.uz' },
-        sourceUrl: 'https://www.afisha.uz/',
-    },
-    {
-        id: '2',
-        title: 'Filmmakers Summit',
-        category: 'FESTIVAL',
-        categoryColor: '#FB923C',
-        date: 'TOMORROW',
-        startsAt: '2026-06-10T19:00:00-07:00',
-        summary: 'Track the opening time, ticket windows, and schedule updates for this experience.',
-        venue: 'The Dolby Theatre',
-        location: 'The Dolby Theatre, LA',
-        city: 'Los Angeles',
-        country: 'US',
-        image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800&q=80',
-        imageType: 'cinema',
-        source: { key: 'afisha_uz', name: 'Afisha.uz' },
-        sourceUrl: 'https://www.afisha.uz/',
-    },
-    {
-        id: '3',
-        title: 'AI & Future Tech',
-        category: 'TECH',
-        categoryColor: '#38BDF8',
-        date: 'NOV 12',
-        startsAt: '2026-11-12T09:00:00-08:00',
-        summary: 'Stay ahead of registration deadlines, session starts, and last-minute venue changes.',
-        venue: 'Moscone Center',
-        location: 'Moscone Center, SF',
-        city: 'San Francisco',
-        country: 'US',
-        image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&q=80',
-        imageType: 'other',
-        source: { key: 'afisha_uz', name: 'Afisha.uz' },
-        sourceUrl: 'https://www.afisha.uz/',
-    },
+const CATEGORIES: Array<{ key: DiscoverCategoryKey; label: string }> = [
+    { key: 'all', label: 'All' },
+    { key: 'tech', label: 'Tech' },
+    { key: 'music', label: 'Music' },
+    { key: 'sports', label: 'Sports' },
+    { key: 'art', label: 'Art' },
+    { key: 'food', label: 'Food' },
+    { key: 'other', label: 'Other' },
 ];
-
-const EXPERIENCE_EVENTS: DiscoverItem[] = [
-    {
-        id: '4',
-        title: 'Modern Gallery Opening',
-        category: 'ART',
-        categoryColor: '#FBBF24',
-        date: 'FRI, 7 PM',
-        startsAt: '2026-06-12T19:00:00-04:00',
-        summary: 'A curated opening night reminder for arrival time, RSVP windows, and venue details.',
-        venue: 'MoMA West Wing',
-        location: 'MoMA West Wing, 5th Ave',
-        city: 'New York',
-        country: 'US',
-        image: 'https://images.unsplash.com/photo-1531243269054-5ebf6f34081e?w=800&q=80',
-        imageType: 'exhibition',
-        source: { key: 'afisha_uz', name: 'Afisha.uz' },
-        sourceUrl: 'https://www.afisha.uz/',
-    },
-    {
-        id: '5',
-        title: 'Rooftop Jazz',
-        category: 'MUSIC',
-        categoryColor: '#C084FC',
-        date: '8:00 PM',
-        startsAt: '2026-06-09T20:00:00-04:00',
-        summary: 'Set a reminder before the set starts so you have time to arrive and settle in.',
-        venue: 'The Skylight Lounge',
-        location: 'The Skylight Lounge, Dow...',
-        city: 'New York',
-        country: 'US',
-        image: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800&q=80',
-        imageType: 'music',
-        source: { key: 'afisha_uz', name: 'Afisha.uz' },
-        sourceUrl: 'https://www.afisha.uz/',
-    },
-];
-
-const CATEGORIES = ['Recommended', 'Tech', 'Music', 'Sports', 'Art', 'Food'];
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.82;
 const CARD_GAP = 14;
+const EXPERIENCE_CARD_GAP = 12;
+const EXPERIENCE_CARD_WIDTH = (SCREEN_WIDTH - 48 - EXPERIENCE_CARD_GAP) / 2;
 const SHOW_DISCOVER_CONTENT = true;
+
+const getCardFallbackColors = (item: DiscoverItem) => {
+    return ['rgba(255,255,255,0.08)', `${item.categoryColor}66`, 'rgba(0,0,0,0.92)'] as const;
+};
+
+const formatCategoryLabel = (category: string) => category.toUpperCase();
+
+function DiscoverCardBackground({
+    item,
+    style,
+    imageStyle,
+    gradientColors,
+    gradientLocations,
+    gradientStyle,
+    children,
+}: {
+    item: DiscoverItem;
+    style: StyleProp<ViewStyle>;
+    imageStyle: StyleProp<ImageStyle>;
+    gradientColors: readonly [string, string, string];
+    gradientLocations: readonly [number, number, ...number[]];
+    gradientStyle: StyleProp<ViewStyle>;
+    children: React.ReactNode;
+}) {
+    const imageUri = item.imageUrl || item.image;
+
+    if (imageUri) {
+        return (
+            <ImageBackground
+                source={{ uri: imageUri }}
+                style={style}
+                imageStyle={imageStyle}
+                resizeMode="cover"
+            >
+                <LinearGradient
+                    colors={gradientColors}
+                    locations={gradientLocations}
+                    style={gradientStyle}
+                >
+                    {children}
+                </LinearGradient>
+            </ImageBackground>
+        );
+    }
+
+    return (
+        <LinearGradient
+            colors={getCardFallbackColors(item)}
+            locations={[0, 0.45, 1]}
+            style={[style, gradientStyle]}
+        >
+            {children}
+        </LinearGradient>
+    );
+}
 
 // ─── Featured Card ──────────────────────────────────────────────────
 function FeaturedCard({
     item,
+    isAdded,
     onPress,
     onRemindPress,
 }: {
     item: DiscoverItem;
+    isAdded: boolean;
     onPress: () => void;
     onRemindPress: () => void;
 }) {
@@ -149,91 +131,84 @@ function FeaturedCard({
             activeOpacity={0.92}
             style={[styles.featuredCard, { width: CARD_WIDTH }]}
         >
-            <ImageBackground
-                source={{ uri: item.image }}
+            <DiscoverCardBackground
+                item={item}
                 style={styles.featuredImage}
                 imageStyle={{ borderRadius: 22 }}
-                resizeMode="cover"
+                gradientColors={['transparent', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.85)']}
+                gradientLocations={[0, 0.45, 1]}
+                gradientStyle={styles.featuredGradient}
             >
-                <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.85)']}
-                    locations={[0, 0.45, 1]}
-                    style={styles.featuredGradient}
+                <TouchableOpacity
+                    onPress={handleLike}
+                    activeOpacity={0.7}
+                    style={styles.heartButton}
                 >
-                    {/* Heart Button */}
-                    <TouchableOpacity
-                        onPress={handleLike}
-                        activeOpacity={0.7}
-                        style={styles.heartButton}
-                    >
-                        <Heart
-                            size={18}
-                            color={liked ? '#F472B6' : 'rgba(255,255,255,0.7)'}
-                            fill={liked ? '#F472B6' : 'transparent'}
-                            strokeWidth={2}
-                        />
-                    </TouchableOpacity>
+                    <Heart
+                        size={18}
+                        color={liked ? '#F472B6' : '#FFFFFF'}
+                        fill={liked ? '#F472B6' : 'transparent'}
+                        strokeWidth={2.25}
+                    />
+                </TouchableOpacity>
 
-                    {/* Card Content */}
-                    <View style={styles.featuredContent}>
-                        {/* Category + Date Row */}
-                        <View className="flex-row items-center gap-2 mb-1.5">
-                            <Text
-                                variant="micro"
-                                weight="extrabold"
-                                style={{ color: item.categoryColor, fontSize: 10, letterSpacing: 2 }}
-                            >
-                                {item.category}
-                            </Text>
-                            <View className="w-1 h-1 rounded-full bg-white/40" />
-                            <Text
-                                variant="micro"
-                                weight="bold"
-                                style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, letterSpacing: 1.5 }}
-                            >
-                                {item.date}
-                            </Text>
-                        </View>
-
-                        {/* Title */}
+                <View style={styles.featuredContent}>
+                    <View className="flex-row items-center gap-2 mb-1.5">
                         <Text
-                            variant="h2"
+                            variant="micro"
                             weight="extrabold"
-                            className="text-white tracking-tight"
-                            style={{ fontSize: 22, lineHeight: 26 }}
+                            style={{ color: item.categoryColor, fontSize: 10, letterSpacing: 2 }}
                         >
-                            {item.title}
+                            {formatCategoryLabel(item.category)}
                         </Text>
+                        <View className="w-1 h-1 rounded-full bg-white/40" />
+                        <Text
+                            variant="micro"
+                            weight="bold"
+                            style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, letterSpacing: 1.5 }}
+                        >
+                            {item.date}
+                        </Text>
+                    </View>
 
-                        {/* Location */}
+                    <Text
+                        variant="h2"
+                        weight="extrabold"
+                        className="text-white tracking-tight"
+                        style={{ fontSize: 22, lineHeight: 26 }}
+                    >
+                        {item.title}
+                    </Text>
+
+                    {!!item.location && (
                         <View className="flex-row items-center gap-1.5 mt-1.5">
                             <MapPin size={12} color="rgba(255,255,255,0.5)" strokeWidth={2} />
                             <Text
                                 variant="caption"
                                 weight="medium"
                                 style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+                                numberOfLines={1}
                             >
                                 {item.location}
                             </Text>
                         </View>
+                    )}
 
-                        {/* Remind Me Button */}
-                        <TouchableOpacity
-                            onPress={handleRemind}
-                            activeOpacity={0.8}
-                            style={styles.remindButton}
+                    <TouchableOpacity
+                        onPress={handleRemind}
+                        activeOpacity={0.8}
+                        style={[styles.remindButton, isAdded && styles.remindButtonAdded]}
+                    >
+                        <Text
+                            variant="caption"
+                            weight="extrabold"
+                            style={{ color: '#fff', fontSize: 13, letterSpacing: 1.5 }}
                         >
-                            <Text
-                                variant="caption"
-                                weight="extrabold"
-                                style={{ color: '#fff', fontSize: 13, letterSpacing: 1.5 }}
-                            >
-                                REMIND ME
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </LinearGradient>
-            </ImageBackground>
+                            {isAdded ? 'ADDED' : 'REMIND ME'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </DiscoverCardBackground>
         </TouchableOpacity>
     );
 }
@@ -274,10 +249,12 @@ function CategoryChip({
 // ─── Experience Card (Grid) ─────────────────────────────────────────
 function ExperienceCard({
     item,
+    isAdded,
     onPress,
     onRemindPress,
 }: {
     item: DiscoverItem;
+    isAdded: boolean;
     onPress: () => void;
     onRemindPress: () => void;
 }) {
@@ -295,59 +272,56 @@ function ExperienceCard({
 
     return (
         <TouchableOpacity onPress={onPress} activeOpacity={0.92} style={styles.experienceCard}>
-            <ImageBackground
-                source={{ uri: item.image }}
+            <DiscoverCardBackground
+                item={item}
                 style={styles.experienceImage}
                 imageStyle={{ borderRadius: 18 }}
-                resizeMode="cover"
+                gradientColors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.88)']}
+                gradientLocations={[0, 0.35, 1]}
+                gradientStyle={styles.experienceGradient}
             >
-                <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.88)']}
-                    locations={[0, 0.35, 1]}
-                    style={styles.experienceGradient}
+                <TouchableOpacity
+                    onPress={handleLike}
+                    activeOpacity={0.7}
+                    style={styles.heartButtonSmall}
                 >
-                    {/* Heart */}
-                    <TouchableOpacity
-                        onPress={handleLike}
-                        activeOpacity={0.7}
-                        style={styles.heartButtonSmall}
-                    >
-                        <Heart
-                            size={14}
-                            color={liked ? '#F472B6' : 'rgba(255,255,255,0.6)'}
-                            fill={liked ? '#F472B6' : 'transparent'}
-                            strokeWidth={2}
-                        />
-                    </TouchableOpacity>
+                    <Heart
+                        size={14}
+                        color={liked ? '#F472B6' : '#FFFFFF'}
+                        fill={liked ? '#F472B6' : 'transparent'}
+                        strokeWidth={2.25}
+                    />
+                </TouchableOpacity>
 
-                    {/* Content */}
-                    <View style={styles.experienceContent}>
-                        <View className="flex-row items-center gap-1.5 mb-1">
-                            <Text
-                                variant="micro"
-                                weight="extrabold"
-                                style={{ color: item.categoryColor, fontSize: 9, letterSpacing: 1.5 }}
-                            >
-                                {item.category}
-                            </Text>
-                            <Text
-                                variant="micro"
-                                weight="bold"
-                                style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, letterSpacing: 1 }}
-                            >
-                                {item.date}
-                            </Text>
-                        </View>
-
+                <View style={styles.experienceContent}>
+                    <View className="flex-row items-center gap-1.5 mb-1">
                         <Text
-                            variant="h3"
+                            variant="micro"
                             weight="extrabold"
-                            className="text-white"
-                            style={{ fontSize: 16, lineHeight: 20 }}
+                            style={{ color: item.categoryColor, fontSize: 9, letterSpacing: 1.5 }}
                         >
-                            {item.title}
+                            {formatCategoryLabel(item.category)}
                         </Text>
+                        <Text
+                            variant="micro"
+                            weight="bold"
+                            style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, letterSpacing: 1 }}
+                        >
+                            {item.date}
+                        </Text>
+                    </View>
 
+                    <Text
+                        variant="h3"
+                        weight="extrabold"
+                        className="text-white"
+                        style={{ fontSize: 16, lineHeight: 20 }}
+                        numberOfLines={2}
+                    >
+                        {item.title}
+                    </Text>
+
+                    {!!item.location && (
                         <View className="flex-row items-center gap-1 mt-1">
                             <MapPin size={10} color="rgba(255,255,255,0.45)" strokeWidth={2} />
                             <Text
@@ -359,23 +333,23 @@ function ExperienceCard({
                                 {item.location}
                             </Text>
                         </View>
+                    )}
 
-                        <TouchableOpacity
-                            onPress={handleRemind}
-                            activeOpacity={0.8}
-                            style={styles.remindButtonSmall}
+                    <TouchableOpacity
+                        onPress={handleRemind}
+                        activeOpacity={0.8}
+                        style={[styles.remindButtonSmall, isAdded && styles.remindButtonAdded]}
+                    >
+                        <Text
+                            variant="caption"
+                            weight="extrabold"
+                            style={{ color: '#fff', fontSize: 11, letterSpacing: 1.2 }}
                         >
-                            <Text
-                                variant="caption"
-                                weight="extrabold"
-                                style={{ color: '#fff', fontSize: 11, letterSpacing: 1.2 }}
-                            >
-                                REMIND ME
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </LinearGradient>
-            </ImageBackground>
+                            {isAdded ? 'ADDED' : 'REMIND ME'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </DiscoverCardBackground>
         </TouchableOpacity>
     );
 }
@@ -385,15 +359,40 @@ export default function DiscoverScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { user } = useAuth();
-    const [activeCategory, setActiveCategory] = useState(0);
+    const [activeCategory, setActiveCategory] = useState<DiscoverCategoryKey>('all');
+    const isAllCategory = activeCategory === 'all';
+    const activeBackendCategory = isAllCategory ? 'tech' : activeCategory;
+    const {
+        data: featuredDiscoverItems = [],
+        isLoading: isFeaturedDiscoverLoading,
+        isFetching: isFeaturedDiscoverFetching,
+        error: featuredDiscoverError,
+        refetch: refetchFeaturedDiscover,
+    } = useDiscoverFeaturedItems();
+    const {
+        data: categoryDiscoverItems = [],
+        isLoading: isCategoryDiscoverLoading,
+        isFetching: isCategoryDiscoverFetching,
+        error: categoryDiscoverError,
+        refetch: refetchCategoryDiscover,
+    } = useDiscoverCategoryItems(activeBackendCategory, !isAllCategory);
+    const addDiscoverReminder = useAddDiscoverReminder();
     const [selectedDiscoverItem, setSelectedDiscoverItem] = useState<DiscoverItem | null>(null);
     const [isDrawerVisible, setIsDrawerVisible] = useState(false);
-    const [isAddingDiscoverReminder, setIsAddingDiscoverReminder] = useState(false);
+    const [addedDiscoverReminderIds, setAddedDiscoverReminderIds] = useState<Set<string>>(() => new Set());
+    const [isPullRefreshing, setIsPullRefreshing] = useState(false);
     const isProUser = isProPlan(user?.plan);
+    const activeCategoryLabel = CATEGORIES.find(category => category.key === activeCategory)?.label || 'All';
+    const featuredEvents = featuredDiscoverItems.slice(0, 3);
+    const experienceEvents = isAllCategory ? featuredDiscoverItems : categoryDiscoverItems;
+    const isExperienceLoading = isAllCategory ? isFeaturedDiscoverLoading : isCategoryDiscoverLoading;
+    const isExperienceFetching = isAllCategory ? isFeaturedDiscoverFetching : isCategoryDiscoverFetching;
+    const experienceError = isAllCategory ? featuredDiscoverError : categoryDiscoverError;
+    const isAddingDiscoverReminder = addDiscoverReminder.isPending;
 
-    const handleCategoryPress = (index: number) => {
+    const handleCategoryPress = (categoryKey: DiscoverCategoryKey) => {
         Haptics.selectionAsync();
-        setActiveCategory(index);
+        setActiveCategory(categoryKey);
     };
 
     const handleOpenDrawer = (item: DiscoverItem) => {
@@ -405,6 +404,28 @@ export default function DiscoverScreen() {
     const handleCloseDrawer = () => {
         if (isAddingDiscoverReminder) return;
         setIsDrawerVisible(false);
+    };
+
+    const handleRefreshDiscover = async () => {
+        if (isAllCategory) {
+            await refetchFeaturedDiscover();
+            return;
+        }
+
+        await Promise.all([
+            refetchFeaturedDiscover(),
+            refetchCategoryDiscover(),
+        ]);
+    };
+
+    const handlePullRefreshDiscover = async () => {
+        setIsPullRefreshing(true);
+
+        try {
+            await handleRefreshDiscover();
+        } finally {
+            setIsPullRefreshing(false);
+        }
     };
 
     const handleAddReminder = async (item: DiscoverItem, notifyBefore: number[]) => {
@@ -420,19 +441,39 @@ export default function DiscoverScreen() {
             return;
         }
 
-        setIsAddingDiscoverReminder(true);
-
         try {
-            await RemindersService.addDiscoverReminder(item.id, { notifyBefore });
+            const notifyBeforeMinutes = notifyBefore.includes(60) ? 60 : notifyBefore[0] ?? 60;
+
+            await addDiscoverReminder.mutateAsync({
+                id: item.id,
+                payload: { notifyBefore: notifyBeforeMinutes },
+            });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            setIsDrawerVisible(false);
-            Alert.alert('Reminder added', 'This Discover item was added to your reminders.');
+            setAddedDiscoverReminderIds(prev => {
+                const next = new Set(prev);
+                next.add(item.id);
+                return next;
+            });
         } catch (error) {
             console.warn('Add Discover reminder failed', error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Reminder not added', 'Discover reminders are not available yet. Please try again later.');
-        } finally {
-            setIsAddingDiscoverReminder(false);
+
+            if ((error as any)?.response?.status === 403) {
+                setIsDrawerVisible(false);
+                try {
+                    router.push('/settings/plans-billing');
+                } catch {
+                    Alert.alert('Discover reminder', 'Adding Discover items is a Pro feature.');
+                }
+                return;
+            }
+
+            const backendMessage = (error as any)?.response?.data?.message;
+            const message = Array.isArray(backendMessage)
+                ? backendMessage.join('\n')
+                : backendMessage || 'Please try again later.';
+
+            Alert.alert('Reminder not added', message);
         }
     };
 
@@ -455,6 +496,13 @@ export default function DiscoverScreen() {
                     paddingTop: insets.top + 24,
                 }}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={isPullRefreshing}
+                        onRefresh={handlePullRefreshDiscover}
+                        tintColor="#8B5CF6"
+                    />
+                }
             >
                 {/* ─── Header ───────────────────────────────────── */}
                 <View style={{ paddingHorizontal: 24, marginBottom: 32 }}>
@@ -475,99 +523,137 @@ export default function DiscoverScreen() {
                     </Text>
                 </View>
 
-                {/* ─── Featured Picks ────────────────────────────── */}
-                <View style={{ marginBottom: 32 }}>
-                    {/* Section Header */}
-                    <View
-                        className="flex-row items-center justify-between"
-                        style={{ paddingHorizontal: 24, marginBottom: 16 }}
-                    >
-                        <Text
-                            variant="micro"
-                            weight="extrabold"
-                            style={{ color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontSize: 11 }}
-                        >
-                            FEATURED PICKS
-                        </Text>
-                        <Text
-                            variant="micro"
-                            weight="bold"
-                            style={{ color: 'rgba(255,255,255,0.18)', letterSpacing: 2, fontSize: 10 }}
-                        >
-                            EDITORIAL
-                        </Text>
+                {isFeaturedDiscoverLoading ? (
+                    <View className="items-center justify-center px-6 py-16">
+                        <ActivityIndicator color="#8B5CF6" size="large" />
                     </View>
+                ) : (
+                    <>
+                        {/* ─── Featured Picks ────────────────────────────── */}
+                        {!featuredDiscoverError && featuredEvents.length > 0 && (
+                            <View style={{ marginBottom: 32 }}>
+                                <View
+                                    className="flex-row items-center justify-between"
+                                    style={{ paddingHorizontal: 24, marginBottom: 16 }}
+                                >
+                                    <Text
+                                        variant="micro"
+                                        weight="extrabold"
+                                        style={{ color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontSize: 11 }}
+                                    >
+                                        FEATURED PICKS
+                                    </Text>
+                                    <Text
+                                        variant="micro"
+                                        weight="bold"
+                                        style={{ color: 'rgba(255,255,255,0.18)', letterSpacing: 2, fontSize: 10 }}
+                                    >
+                                        CURATED
+                                    </Text>
+                                </View>
 
-                    {/* Carousel */}
-                    <FlatList
-                        data={FEATURED_EVENTS}
-                        keyExtractor={item => item.id}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingHorizontal: 24 }}
-                        snapToInterval={CARD_WIDTH + CARD_GAP}
-                        decelerationRate="fast"
-                        ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
-                        renderItem={({ item }) => (
-                            <FeaturedCard
-                                item={item}
-                                onPress={() => handleOpenDrawer(item)}
-                                onRemindPress={() => handleOpenDrawer(item)}
-                            />
+                                <FlatList
+                                    data={featuredEvents}
+                                    keyExtractor={item => item.id}
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={{ paddingHorizontal: 24 }}
+                                    snapToInterval={CARD_WIDTH + CARD_GAP}
+                                    decelerationRate="fast"
+                                    ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
+                                    renderItem={({ item }) => (
+                                        <FeaturedCard
+                                            item={item}
+                                            isAdded={addedDiscoverReminderIds.has(item.id)}
+                                            onPress={() => handleOpenDrawer(item)}
+                                            onRemindPress={() => handleOpenDrawer(item)}
+                                        />
+                                    )}
+                                />
+                            </View>
                         )}
-                    />
-                </View>
 
-                {/* ─── Category Chips ────────────────────────────── */}
-                <View style={{ marginBottom: 36 }}>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingHorizontal: 24, gap: 10 }}
-                    >
-                        {CATEGORIES.map((cat, idx) => (
-                            <CategoryChip
-                                key={cat}
-                                label={cat}
-                                active={idx === activeCategory}
-                                onPress={() => handleCategoryPress(idx)}
-                            />
-                        ))}
-                    </ScrollView>
-                </View>
+                        {/* ─── Category Chips ────────────────────────────── */}
+                        <View style={{ marginBottom: 36 }}>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={{ paddingHorizontal: 24, gap: 10 }}
+                            >
+                                {CATEGORIES.map(cat => (
+                                    <CategoryChip
+                                        key={cat.key}
+                                        label={cat.label}
+                                        active={cat.key === activeCategory}
+                                        onPress={() => handleCategoryPress(cat.key)}
+                                    />
+                                ))}
+                            </ScrollView>
+                        </View>
 
-                {/* ─── More Experiences ──────────────────────────── */}
-                <View style={{ paddingHorizontal: 24 }}>
-                    {/* Section Header */}
-                    <View className="flex-row items-center justify-between mb-4">
-                        <Text
-                            variant="micro"
-                            weight="extrabold"
-                            style={{ color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontSize: 11 }}
-                        >
-                            MORE EXPERIENCES
-                        </Text>
-                        <Text
-                            variant="micro"
-                            weight="bold"
-                            style={{ color: 'rgba(255,255,255,0.18)', letterSpacing: 2, fontSize: 10 }}
-                        >
-                            {EXPERIENCE_EVENTS.length} ITEMS
-                        </Text>
-                    </View>
+                        {/* ─── More Experiences ──────────────────────────── */}
+                        {isExperienceLoading ? (
+                            <View className="items-center justify-center px-6 py-16">
+                                <ActivityIndicator color="#8B5CF6" size="large" />
+                            </View>
+                        ) : experienceError ? (
+                            <View className="px-6">
+                                <EmptyState
+                                    compact
+                                    message="DISCOVER UNAVAILABLE"
+                                    subtext="We could not load Discover right now."
+                                    actionLabel="Retry"
+                                    onAction={handleRefreshDiscover}
+                                />
+                            </View>
+                        ) : experienceEvents.length === 0 ? (
+                            <View className="px-6">
+                                <EmptyState
+                                    compact
+                                    message={activeCategory === 'all' ? 'NO DISCOVER ITEMS' : 'NO ITEMS'}
+                                    subtext={
+                                        activeCategory === 'all'
+                                            ? 'There are no Discover experiences to show yet.'
+                                            : `No ${activeCategoryLabel.toLowerCase()} experiences are available yet.`
+                                    }
+                                    actionLabel={isExperienceFetching ? undefined : 'Refresh'}
+                                    onAction={isExperienceFetching ? undefined : handleRefreshDiscover}
+                                />
+                            </View>
+                        ) : experienceEvents.length > 0 && (
+                            <View style={{ paddingHorizontal: 24 }}>
+                                <View className="flex-row items-center justify-between mb-4">
+                                    <Text
+                                        variant="micro"
+                                        weight="extrabold"
+                                        style={{ color: 'rgba(255,255,255,0.25)', letterSpacing: 3, fontSize: 11 }}
+                                    >
+                                        MORE EXPERIENCES
+                                    </Text>
+                                    <Text
+                                        variant="micro"
+                                        weight="bold"
+                                        style={{ color: 'rgba(255,255,255,0.18)', letterSpacing: 2, fontSize: 10 }}
+                                    >
+                                        {experienceEvents.length} ITEMS
+                                    </Text>
+                                </View>
 
-                    {/* Grid */}
-                    <View className="flex-row gap-3">
-                        {EXPERIENCE_EVENTS.map(item => (
-                            <ExperienceCard
-                                key={item.id}
-                                item={item}
-                                onPress={() => handleOpenDrawer(item)}
-                                onRemindPress={() => handleOpenDrawer(item)}
-                            />
-                        ))}
-                    </View>
-                </View>
+                                <View style={styles.experienceGrid}>
+                                    {experienceEvents.map(item => (
+                                        <ExperienceCard
+                                            key={item.id}
+                                            item={item}
+                                            isAdded={addedDiscoverReminderIds.has(item.id)}
+                                            onPress={() => handleOpenDrawer(item)}
+                                            onRemindPress={() => handleOpenDrawer(item)}
+                                        />
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+                    </>
+                )}
             </ScrollView>
 
             <DiscoverDetailDrawer
@@ -576,6 +662,7 @@ export default function DiscoverScreen() {
                 onClose={handleCloseDrawer}
                 onAddReminder={handleAddReminder}
                 isAdding={isAddingDiscoverReminder}
+                isAdded={selectedDiscoverItem ? addedDiscoverReminderIds.has(selectedDiscoverItem.id) : false}
             />
         </View>
     );
@@ -607,9 +694,15 @@ const styles = StyleSheet.create({
         width: 38,
         height: 38,
         borderRadius: 19,
-        backgroundColor: 'rgba(255,255,255,0.12)',
+        backgroundColor: 'rgba(0,0,0,0.38)',
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.24)',
+        shadowColor: '#000',
+        shadowOpacity: 0.35,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
     },
     remindButton: {
         marginTop: 16,
@@ -620,6 +713,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.06)',
+    },
+    remindButtonAdded: {
+        backgroundColor: 'rgba(139,92,246,0.18)',
+        borderColor: 'rgba(139,92,246,0.32)',
     },
 
     // Category Chip
@@ -644,9 +741,14 @@ const styles = StyleSheet.create({
 
     // Experience Card (Grid)
     experienceCard: {
-        flex: 1,
+        width: EXPERIENCE_CARD_WIDTH,
         borderRadius: 18,
         overflow: 'hidden',
+    },
+    experienceGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: EXPERIENCE_CARD_GAP,
     },
     experienceImage: {
         height: 300,
@@ -665,9 +767,15 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.12)',
+        backgroundColor: 'rgba(0,0,0,0.42)',
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.24)',
+        shadowColor: '#000',
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 3 },
     },
     remindButtonSmall: {
         marginTop: 12,
