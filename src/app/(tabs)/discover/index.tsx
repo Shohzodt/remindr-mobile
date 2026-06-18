@@ -17,7 +17,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Heart, MapPin } from 'lucide-react-native';
+import { CheckCircle, Heart, MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 import { Text } from '@/components/ui/Text';
@@ -199,6 +199,7 @@ function FeaturedCard({
                         activeOpacity={0.8}
                         style={[styles.remindButton, isAdded && styles.remindButtonAdded]}
                     >
+                        {isAdded && <CheckCircle size={15} color="#ffffff" />}
                         <Text
                             variant="caption"
                             weight="extrabold"
@@ -340,6 +341,7 @@ function ExperienceCard({
                         activeOpacity={0.8}
                         style={[styles.remindButtonSmall, isAdded && styles.remindButtonAdded]}
                     >
+                        {isAdded && <CheckCircle size={13} color="#ffffff" />}
                         <Text
                             variant="caption"
                             weight="extrabold"
@@ -711,6 +713,8 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         alignItems: 'center',
         justifyContent: 'center',
+        flexDirection: 'row',
+        gap: 7,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.06)',
     },
@@ -784,6 +788,8 @@ const styles = StyleSheet.create({
         paddingVertical: 11,
         alignItems: 'center',
         justifyContent: 'center',
+        flexDirection: 'row',
+        gap: 6,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.06)',
     },

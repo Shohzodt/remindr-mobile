@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Bell, ExternalLink, MapPin, X } from 'lucide-react-native';
+import { Bell, CheckCircle, ExternalLink, MapPin, X } from 'lucide-react-native';
 
 import { Text } from '@/components/ui/Text';
 import { Theme } from '@/theme';
@@ -261,16 +261,21 @@ export function DiscoverDetailDrawer({
                             style={{
                                 flex: 1,
                                 borderRadius: 100,
+                                flexDirection: 'row',
                                 alignItems: 'center',
                                 justifyContent: 'center',
+                                gap: 8,
                             }}
                         >
                             {isAdding ? (
                                 <ActivityIndicator color="#ffffff" />
                             ) : (
-                                <Text className={`text-lg font-sans-bold ${hasDate ? 'text-white' : 'text-zinc-500'}`}>
-                                    {!hasDate ? 'Date not available' : isAdded ? 'Added' : 'Remind Me'}
-                                </Text>
+                                <>
+                                    {isAdded && <CheckCircle size={20} color="#ffffff" />}
+                                    <Text className={`text-lg font-sans-bold ${hasDate ? 'text-white' : 'text-zinc-500'}`}>
+                                        {!hasDate ? 'Date not available' : isAdded ? 'Added' : 'Remind Me'}
+                                    </Text>
+                                </>
                             )}
                         </LinearGradient>
                     </TouchableOpacity>

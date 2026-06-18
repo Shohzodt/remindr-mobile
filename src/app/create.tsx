@@ -44,6 +44,7 @@ const NOTIFY_BEFORE_OPTIONS = [
 ] as const;
 
 const NOTIFY_BEFORE_VALUES = NOTIFY_BEFORE_OPTIONS.map(option => option.value);
+const DOC_AI_MIN_LEAD_TIME_MINUTES = 5;
 
 const formatNotifyBeforeLabel = (notifyBefore: number) => {
     switch (notifyBefore) {
@@ -59,6 +60,63 @@ const formatNotifyBeforeLabel = (notifyBefore: number) => {
         default:
             return '15m';
     }
+};
+
+const isSameLocalDate = (first: Date, second: Date) => (
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate()
+);
+
+const roundUpToNextFiveMinutes = (value: Date) => {
+    const next = new Date(value);
+    next.setSeconds(0, 0);
+
+    const roundedMinutes = Math.ceil(next.getMinutes() / 5) * 5;
+    if (roundedMinutes >= 60) {
+        next.setHours(next.getHours() + 1, 0, 0, 0);
+    } else {
+        next.setMinutes(roundedMinutes, 0, 0);
+    }
+
+    return next;
+};
+
+const buildDocAiReminderDate = (
+    currentDate: Date,
+    year: number,
+    month: number,
+    day: number,
+    currentNotifyBefore: number
+) => {
+    const nextDate = new Date(currentDate);
+    nextDate.setFullYear(year, month - 1, day);
+    nextDate.setSeconds(0, 0);
+
+    const now = new Date();
+    if (!isSameLocalDate(nextDate, now)) {
+        return { date: nextDate, notifyBefore: currentNotifyBefore };
+    }
+
+    const minimumReminderAt = roundUpToNextFiveMinutes(
+        new Date(now.getTime() + (currentNotifyBefore + DOC_AI_MIN_LEAD_TIME_MINUTES) * 60 * 1000)
+    );
+
+    if (isSameLocalDate(minimumReminderAt, nextDate)) {
+        nextDate.setHours(minimumReminderAt.getHours(), minimumReminderAt.getMinutes(), 0, 0);
+        return { date: nextDate, notifyBefore: currentNotifyBefore };
+    }
+
+    const atTimeReminderAt = roundUpToNextFiveMinutes(
+        new Date(now.getTime() + DOC_AI_MIN_LEAD_TIME_MINUTES * 60 * 1000)
+    );
+
+    if (isSameLocalDate(atTimeReminderAt, nextDate)) {
+        nextDate.setHours(atTimeReminderAt.getHours(), atTimeReminderAt.getMinutes(), 0, 0);
+        return { date: nextDate, notifyBefore: 0 };
+    }
+
+    return { date: nextDate, notifyBefore: currentNotifyBefore };
 };
 
 export default function CreateReminderScreen() {
@@ -174,15 +232,11 @@ export default function CreateReminderScreen() {
         setTitle(deadline.title);
         setNotes(`${deadline.description}\n\nSource: ${sourceFileName}`);
         setLocation('');
-        setDate((currentDate) => {
-            if (!year || !month || !day) {
-                return currentDate;
-            }
-
-            const detectedDate = new Date(currentDate);
-            detectedDate.setFullYear(year, month - 1, day);
-            return detectedDate;
-        });
+        if (year && month && day) {
+            const docAiDate = buildDocAiReminderDate(date, year, month, day, notifyBefore);
+            setDate(docAiDate.date);
+            setNotifyBefore(docAiDate.notifyBefore);
+        }
         setShowDetails(true);
         setIsDocAiVisible(false);
     };
@@ -339,7 +393,7 @@ export default function CreateReminderScreen() {
                             <View className="flex-1 flex-col leading-relaxed">
                                 <Text className="text-accent-purple font-sans-bold text-xs uppercase">Tip: </Text>
                                 <Text className="text-[#9f9fa9] text-xs font-sans-medium">
-                                    Speak naturally in your native language. Remindr AI understands 50+ tongues and formats them perfectly.
+                                    Speak naturally in Uzbek, Russian, or English. Remindr AI turns your words into a clean reminder.
                                 </Text>
                             </View>
                         </LinearGradient>
